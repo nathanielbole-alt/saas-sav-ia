@@ -1,0 +1,502 @@
+// Types générés manuellement à partir de supabase/migrations/00001_initial_schema.sql
+// Sera remplacé par supabase gen types quand le projet Supabase sera connecté
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  public: {
+    Tables: {
+      organizations: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          plan: 'pro' | 'business' | 'enterprise'
+          subscription_status: 'active' | 'trialing' | 'past_due' | 'canceled'
+          refund_policy: string | null
+          sav_policy: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          plan?: 'pro' | 'business' | 'enterprise'
+          subscription_status?: 'active' | 'trialing' | 'past_due' | 'canceled'
+          refund_policy?: string | null
+          sav_policy?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          plan?: 'pro' | 'business' | 'enterprise'
+          subscription_status?: 'active' | 'trialing' | 'past_due' | 'canceled'
+          refund_policy?: string | null
+          sav_policy?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          id: string
+          organization_id: string
+          full_name: string | null
+          email: string
+          role: 'owner' | 'admin' | 'agent'
+          avatar_url: string | null
+          is_onboarded: boolean
+          industry: string | null
+          team_size: string | null
+          ticket_volume: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          organization_id: string
+          full_name?: string | null
+          email: string
+          role?: 'owner' | 'admin' | 'agent'
+          avatar_url?: string | null
+          is_onboarded?: boolean
+          industry?: string | null
+          team_size?: string | null
+          ticket_volume?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          full_name?: string | null
+          email?: string
+          role?: 'owner' | 'admin' | 'agent'
+          avatar_url?: string | null
+          is_onboarded?: boolean
+          industry?: string | null
+          team_size?: string | null
+          ticket_volume?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'profiles_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          id: string
+          organization_id: string
+          email: string
+          full_name: string | null
+          phone: string | null
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          email: string
+          full_name?: string | null
+          phone?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          email?: string
+          full_name?: string | null
+          phone?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'customers_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          id: string
+          organization_id: string
+          customer_id: string
+          assigned_to: string | null
+          subject: string
+          status: 'open' | 'pending' | 'resolved' | 'closed'
+          priority: 'low' | 'medium' | 'high' | 'urgent'
+          channel: 'email' | 'form' | 'google_review' | 'manual' | 'instagram' | 'messenger'
+          metadata: Json | null
+          ai_summary: string | null
+          csat_rating: number | null
+          csat_comment: string | null
+          csat_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          customer_id: string
+          assigned_to?: string | null
+          subject: string
+          status?: 'open' | 'pending' | 'resolved' | 'closed'
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          channel?: 'email' | 'form' | 'google_review' | 'manual' | 'instagram' | 'messenger'
+          metadata?: Json | null
+          ai_summary?: string | null
+          csat_rating?: number | null
+          csat_comment?: string | null
+          csat_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          customer_id?: string
+          assigned_to?: string | null
+          subject?: string
+          status?: 'open' | 'pending' | 'resolved' | 'closed'
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          channel?: 'email' | 'form' | 'google_review' | 'manual' | 'instagram' | 'messenger'
+          metadata?: Json | null
+          ai_summary?: string | null
+          csat_rating?: number | null
+          csat_comment?: string | null
+          csat_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'tickets_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tickets_customer_id_fkey'
+            columns: ['customer_id']
+            isOneToOne: false
+            referencedRelation: 'customers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tickets_assigned_to_fkey'
+            columns: ['assigned_to']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          id: string
+          ticket_id: string
+          sender_type: 'customer' | 'agent' | 'ai'
+          sender_id: string | null
+          body: string
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          ticket_id: string
+          sender_type: 'customer' | 'agent' | 'ai'
+          sender_id?: string | null
+          body: string
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          ticket_id?: string
+          sender_type?: 'customer' | 'agent' | 'ai'
+          sender_id?: string | null
+          body?: string
+          metadata?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'messages_ticket_id_fkey'
+            columns: ['ticket_id']
+            isOneToOne: false
+            referencedRelation: 'tickets'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      tags: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          color: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          color?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          color?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'tags_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      integrations: {
+        Row: {
+          id: string
+          organization_id: string
+          provider: string
+          status: string
+          access_token: string | null
+          refresh_token: string | null
+          token_expires_at: string | null
+          email: string | null
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          provider: string
+          status?: string
+          access_token?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          email?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          provider?: string
+          status?: string
+          access_token?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          email?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'integrations_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          id: string
+          organization_id: string
+          ticket_id: string
+          type: string
+          title: string
+          body: string
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          ticket_id: string
+          type?: string
+          title: string
+          body: string
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          ticket_id?: string
+          type?: string
+          title?: string
+          body?: string
+          read?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_ticket_id_fkey'
+            columns: ['ticket_id']
+            isOneToOne: false
+            referencedRelation: 'tickets'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          id: string
+          organization_id: string
+          email: string
+          role: 'owner' | 'admin' | 'agent'
+          invited_by: string
+          token: string
+          status: 'pending' | 'accepted' | 'expired' | 'revoked'
+          expires_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          email: string
+          role?: 'owner' | 'admin' | 'agent'
+          invited_by: string
+          token?: string
+          status?: 'pending' | 'accepted' | 'expired' | 'revoked'
+          expires_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          email?: string
+          role?: 'owner' | 'admin' | 'agent'
+          invited_by?: string
+          token?: string
+          status?: 'pending' | 'accepted' | 'expired' | 'revoked'
+          expires_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'invitations_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'invitations_invited_by_fkey'
+            columns: ['invited_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      ticket_tags: {
+        Row: {
+          ticket_id: string
+          tag_id: string
+        }
+        Insert: {
+          ticket_id: string
+          tag_id: string
+        }
+        Update: {
+          ticket_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'ticket_tags_ticket_id_fkey'
+            columns: ['ticket_id']
+            isOneToOne: false
+            referencedRelation: 'tickets'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'ticket_tags_tag_id_fkey'
+            columns: ['tag_id']
+            isOneToOne: false
+            referencedRelation: 'tags'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+    }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: {
+      user_role: 'owner' | 'admin' | 'agent'
+      ticket_status: 'open' | 'pending' | 'resolved' | 'closed'
+      ticket_priority: 'low' | 'medium' | 'high' | 'urgent'
+      ticket_channel: 'email' | 'form' | 'google_review' | 'manual' | 'instagram' | 'messenger'
+      sender_type: 'customer' | 'agent' | 'ai'
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helper types — raccourcis pour accéder aux Row de chaque table
+// ---------------------------------------------------------------------------
+
+export type Organization = Database['public']['Tables']['organizations']['Row']
+export type Profile = Database['public']['Tables']['profiles']['Row']
+export type Customer = Database['public']['Tables']['customers']['Row']
+export type Ticket = Database['public']['Tables']['tickets']['Row']
+export type Message = Database['public']['Tables']['messages']['Row']
+export type Tag = Database['public']['Tables']['tags']['Row']
+export type TicketTag = Database['public']['Tables']['ticket_tags']['Row']
+export type Integration = Database['public']['Tables']['integrations']['Row']
+export type Notification = Database['public']['Tables']['notifications']['Row']
+export type Invitation = Database['public']['Tables']['invitations']['Row']
