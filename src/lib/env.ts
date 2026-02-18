@@ -42,6 +42,9 @@ const envSchema = z.object({
   NEXTAUTH_SECRET: z.string().min(32),
   NEXTAUTH_URL: z.string().url(),
 
+  // Cron
+  CRON_SECRET: z.string().min(1).optional(),
+
   // Node
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 })
@@ -70,6 +73,7 @@ const envParse = envSchema.safeParse({
   META_WEBHOOK_VERIFY_TOKEN: process.env.META_WEBHOOK_VERIFY_TOKEN,
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  CRON_SECRET: process.env.CRON_SECRET,
   NODE_ENV: process.env.NODE_ENV,
 })
 
