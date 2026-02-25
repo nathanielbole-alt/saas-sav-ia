@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export function LoginForm() {
@@ -10,7 +11,6 @@ export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(searchParams.get('error'))
-  const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const supabase = createClient()
@@ -18,7 +18,6 @@ export function LoginForm() {
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    setMessage(null)
     setLoading(true)
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -31,30 +30,6 @@ export function LoginForm() {
 
     router.push('/dashboard')
     router.refresh()
-  }
-
-  async function handleSignUp(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setMessage(null)
-    setLoading(true)
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
-    setMessage('Vérifiez votre email pour confirmer votre inscription.')
-    setLoading(false)
   }
 
   return (
@@ -96,29 +71,20 @@ export function LoginForm() {
         </div>
       )}
 
-      {message && (
-        <div className="rounded-lg bg-green-500/10 p-3 text-sm text-green-600">
-          {message}
-        </div>
-      )}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        {loading ? 'Connexion...' : 'Se connecter'}
+      </button>
 
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 rounded-lg bg-foreground px-4 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? '...' : 'Se connecter'}
-        </button>
-        <button
-          type="button"
-          disabled={loading}
-          onClick={handleSignUp}
-          className="flex-1 rounded-lg border border-foreground/20 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 disabled:opacity-50"
-        >
-          S&apos;inscrire
-        </button>
-      </div>
+      <p className="text-center text-sm text-foreground/60">
+        Pas encore de compte ?{' '}
+        <Link href="/signup" className="font-medium text-foreground hover:opacity-80">
+          Créer un compte
+        </Link>
+      </p>
     </form>
   )
 }

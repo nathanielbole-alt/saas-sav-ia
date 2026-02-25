@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import { checkFeatureAccess } from '@/lib/feature-gate'
 import crypto from 'crypto'
 
+const PROVIDER_TIMEOUT_MS = 10_000
+
 function getOAuth2Client() {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -13,95 +15,127 @@ function getOAuth2Client() {
   )
 }
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams
-  const code = searchParams.get('code')
-  const state = searchParams.get('state')
-  const error = searchParams.get('error')
-
-  if (error) {
-    return NextResponse.redirect(
-      new URL('/dashboard/settings?gmail=error&reason=denied', request.url)
-    )
+class ProviderTimeoutError extends Error {
+  constructor(message = 'Provider request timed out') {
+    super(message)
+    this.name = 'ProviderTimeoutError'
   }
+}
 
-  if (!code || !state) {
-    return NextResponse.redirect(
-      new URL('/dashboard/settings?gmail=error&reason=missing_params', request.url)
-    )
-  }
+function redirectTo(request: NextRequest, path: string) {
+  return NextResponse.redirect(new URL(path, request.url))
+}
 
-  // Validate CSRF state against httpOnly cookie
-  const cookieStore = await cookies()
-  const storedState = cookieStore.get('gmail_oauth_state')?.value
+function safeEqual(left: string, right: string) {
+  return (
+    left.length === right.length &&
+    crypto.timingSafeEqual(Buffer.from(left), Buffer.from(right))
+  )
+}
 
-  if (
-    !storedState ||
-    state.length !== storedState.length ||
-    !crypto.timingSafeEqual(Buffer.from(state), Buffer.from(storedState))
-  ) {
-    return NextResponse.redirect(
-      new URL('/dashboard/settings?gmail=error&reason=csrf', request.url)
-    )
-  }
-
-  // Clear the state cookie
-  cookieStore.delete('gmail_oauth_state')
-
-  // Check if user is coming from onboarding wizard
-  const fromOnboarding = cookieStore.get('onboarding_redirect')?.value === '1'
-  if (fromOnboarding) cookieStore.delete('onboarding_redirect')
-
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.redirect(
-      new URL('/login', request.url)
-    )
-  }
-
-  // Get org from session (NOT from state param)
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single()
-
-  const p = profile as unknown as { organization_id: string; role: string } | null
-  if (!p || !['owner', 'admin'].includes(p.role)) {
-    return NextResponse.redirect(
-      new URL('/dashboard/settings?gmail=error&reason=forbidden', request.url)
-    )
-  }
-
-  // Check integration limit (only for new integrations, not reconnections)
-  const { data: existingGmail } = await supabase
-    .from('integrations')
-    .select('id')
-    .eq('organization_id', p.organization_id)
-    .eq('provider', 'gmail')
-    .limit(1)
-
-  if (!existingGmail || existingGmail.length === 0) {
-    const integrationCheck = await checkFeatureAccess(p.organization_id, 'integrations')
-    if (!integrationCheck.allowed) {
-      return NextResponse.redirect(
-        new URL('/dashboard/settings?gmail=error&reason=plan_limit', request.url)
-      )
-    }
-  }
+async function withTimeout<T>(promise: Promise<T>, timeoutMs = PROVIDER_TIMEOUT_MS): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
 
   try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new ProviderTimeoutError()), timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const code = searchParams.get('code')
+    const state = searchParams.get('state')
+    const oauthError = searchParams.get('error')
+
+    if (oauthError) {
+      return redirectTo(request, '/dashboard/settings?gmail=error&reason=denied')
+    }
+
+    if (!code || !state) {
+      return redirectTo(request, '/dashboard/settings?gmail=error&reason=missing_params')
+    }
+
+    const cookieStore = await cookies()
+    const storedState = cookieStore.get('gmail_oauth_state')?.value
+    if (!storedState || !safeEqual(state, storedState)) {
+      return redirectTo(
+        request,
+        '/dashboard/settings?gmail=error&reason=state_mismatch&message=csrf_state_invalid'
+      )
+    }
+
+    cookieStore.delete('gmail_oauth_state')
+
+    const fromOnboarding = cookieStore.get('onboarding_redirect')?.value === '1'
+    if (fromOnboarding) cookieStore.delete('onboarding_redirect')
+
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      console.error('Gmail OAuth session error:', userError.message)
+      return redirectTo(request, '/dashboard/settings?gmail=error&reason=session')
+    }
+
+    if (!user) {
+      return redirectTo(request, '/login')
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id, role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError) {
+      console.error('Gmail OAuth profile error:', profileError.message)
+      return redirectTo(request, '/dashboard/settings?gmail=error&reason=profile')
+    }
+
+    const p = profile as unknown as { organization_id: string; role: string } | null
+    if (!p || !['owner', 'admin'].includes(p.role)) {
+      return redirectTo(request, '/dashboard/settings?gmail=error&reason=forbidden')
+    }
+
+    const { data: existingGmail } = await supabase
+      .from('integrations')
+      .select('id')
+      .eq('organization_id', p.organization_id)
+      .eq('provider', 'gmail')
+      .limit(1)
+
+    if (!existingGmail || existingGmail.length === 0) {
+      const integrationCheck = await checkFeatureAccess(p.organization_id, 'integrations')
+      if (!integrationCheck.allowed) {
+        return redirectTo(request, '/dashboard/settings?gmail=error&reason=plan_limit')
+      }
+    }
+
     const oauth2Client = getOAuth2Client()
-    const { tokens } = await oauth2Client.getToken(code)
+    const tokenResult = await withTimeout(oauth2Client.getToken(code))
+    const { tokens } = tokenResult
+
+    if (!tokens.access_token) {
+      return redirectTo(request, '/dashboard/settings?gmail=error&reason=token_invalid')
+    }
+
     oauth2Client.setCredentials(tokens)
 
-    // Get the connected Gmail address
     const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client })
-    const { data: userInfo } = await oauth2.userinfo.get()
+    const userInfoResponse = await withTimeout(oauth2.userinfo.get())
+    const userInfo = userInfoResponse.data
 
-    // Upsert integration record
     const { error: dbError } = await supabase
       .from('integrations')
       .upsert(
@@ -123,19 +157,23 @@ export async function GET(request: NextRequest) {
 
     if (dbError) {
       console.error('Failed to save Gmail integration:', dbError.message)
-      return NextResponse.redirect(
-        new URL('/dashboard/settings?gmail=error&reason=db', request.url)
-      )
+      return redirectTo(request, '/dashboard/settings?gmail=error&reason=db')
     }
 
     const successUrl = fromOnboarding
       ? '/dashboard/onboarding?step=3&connected=gmail'
       : '/dashboard/settings?gmail=success'
-    return NextResponse.redirect(new URL(successUrl, request.url))
+    return redirectTo(request, successUrl)
   } catch (err) {
+    if (err instanceof ProviderTimeoutError) {
+      console.error('Gmail OAuth provider timeout:', err.message)
+      return redirectTo(
+        request,
+        '/dashboard/settings?gmail=error&reason=provider_timeout&message=gmail_unavailable'
+      )
+    }
+
     console.error('Gmail OAuth callback error:', err instanceof Error ? err.message : 'Unknown error')
-    return NextResponse.redirect(
-      new URL('/dashboard/settings?gmail=error&reason=token', request.url)
-    )
+    return redirectTo(request, '/dashboard/settings?gmail=error&reason=token_invalid')
   }
 }

@@ -29,16 +29,10 @@ export default async function DashboardLayout({
 
   if (!isOnboarded) {
     return (
-      <div className="relative flex h-screen w-full overflow-hidden bg-[#050505] text-zinc-100 selection:bg-violet-500/30">
-        {/* Aurora Background */}
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-          <div className="animate-aurora-1 absolute -top-[20%] -right-[20%] h-[600px] w-[600px] rounded-full bg-[#8b5cf6]/[0.07] blur-[150px]" />
-          <div className="animate-aurora-2 absolute -bottom-[20%] -left-[20%] h-[500px] w-[500px] rounded-full bg-indigo-600/[0.05] blur-[120px]" />
-        </div>
-
+      <div className="flex h-screen w-full overflow-hidden bg-[#0B0B0F] text-[#EDEDED]">
         <OnboardingRedirect />
-        <div className="relative z-10 flex h-full w-full items-center justify-center p-4">
-          <main className="w-full max-w-3xl overflow-hidden rounded-xl border border-white/[0.06] bg-[#0c0c10] shadow-2xl shadow-[#8b5cf6]/[0.03]">
+        <div className="flex h-full w-full items-center justify-center p-4">
+          <main className="w-full max-w-3xl overflow-hidden rounded-2xl border border-white/[0.06] bg-[#131316]">
             {children}
           </main>
         </div>
@@ -62,37 +56,28 @@ export default async function DashboardLayout({
   }).length ?? 0
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-[#050505] text-zinc-100 selection:bg-violet-500/30">
-      {/* Aurora Background */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <div className="animate-aurora-1 absolute -top-[20%] -right-[20%] h-[600px] w-[600px] rounded-full bg-[#8b5cf6]/[0.07] blur-[150px]" />
-        <div className="animate-aurora-2 absolute -bottom-[20%] -left-[20%] h-[500px] w-[500px] rounded-full bg-indigo-600/[0.05] blur-[120px]" />
-        <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
-      </div>
-
-      <div className="relative z-10 flex h-full w-full flex-col md:flex-row gap-3 p-3">
-        {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between px-2 min-h-[40px]">
-          <MobileSidebar user={{ email: user.email ?? '' }} unreadCount={unreadCount} />
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#8b5cf6]">
-              <span className="text-[8px] font-black text-white">S</span>
-            </div>
-            <span className="text-sm font-bold text-white tracking-tight">SAV IA</span>
+    <div className="flex h-screen w-full overflow-hidden bg-[#0B0B0F] text-[#EDEDED]">
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-12 bg-[#0B0B0F]/80 backdrop-blur-xl border-b border-white/[0.06]">
+        <MobileSidebar user={{ email: user.email ?? '' }} unreadCount={unreadCount} />
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#E8856C]/20">
+            <span className="text-[8px] font-black text-[#E8856C]">S</span>
           </div>
-          <div className="w-10" />
+          <span className="text-sm font-semibold text-[#EDEDED] tracking-tight">Savly</span>
         </div>
-
-        {/* Floating Sidebar (Desktop) */}
-        <div className="hidden md:block shrink-0">
-          <Sidebar user={{ email: user.email ?? '' }} unreadCount={unreadCount} />
-        </div>
-
-        {/* Main Content Island */}
-        <main className="flex-1 overflow-hidden rounded-xl border border-white/[0.06] bg-[#0c0c10] shadow-xl shadow-[#8b5cf6]/[0.02] transition-all duration-300">
-          {children}
-        </main>
+        <div className="w-10" />
       </div>
+
+      {/* Sidebar (Desktop) */}
+      <div className="hidden md:block shrink-0">
+        <Sidebar user={{ email: user.email ?? '' }} unreadCount={unreadCount} />
+      </div>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-hidden md:pt-0 pt-12">
+        {children}
+      </main>
     </div>
   )
 }

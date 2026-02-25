@@ -1,10 +1,48 @@
-'use server'
-
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { checkFeatureAccess } from '@/lib/feature-gate'
 import crypto from 'crypto'
+
+const PROVIDER_TIMEOUT_MS = 10_000
+
+class ProviderTimeoutError extends Error {
+  constructor(message = 'Provider request timed out') {
+    super(message)
+    this.name = 'ProviderTimeoutError'
+  }
+}
+
+function redirectTo(request: NextRequest, path: string) {
+  return NextResponse.redirect(new URL(path, request.url))
+}
+
+function safeEqual(left: string, right: string) {
+  return (
+    left.length === right.length &&
+    crypto.timingSafeEqual(Buffer.from(left), Buffer.from(right))
+  )
+}
+
+async function fetchWithTimeout(
+  input: string | URL,
+  init: RequestInit,
+  timeoutMs = PROVIDER_TIMEOUT_MS
+) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal })
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new ProviderTimeoutError()
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
 
 // Validate Shopify HMAC signature
 function validateHmac(query: URLSearchParams, secret: string): boolean {
@@ -41,91 +79,98 @@ function validateHmac(query: URLSearchParams, secret: string): boolean {
   }
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const cookieStore = await cookies()
-
-  // Validate CSRF nonce
-  const state = searchParams.get('state')
-  const storedState = cookieStore.get('shopify_oauth_state')?.value
-  const storedShop = cookieStore.get('shopify_shop')?.value
-
-  if (!state || !storedState || state !== storedState) {
-    return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=error&message=csrf_mismatch`
-    )
-  }
-
-  // Clear the state cookies
-  cookieStore.delete('shopify_oauth_state')
-  cookieStore.delete('shopify_shop')
-
-  // Check if user is coming from onboarding wizard
-  const fromOnboarding = cookieStore.get('onboarding_redirect')?.value === '1'
-  if (fromOnboarding) cookieStore.delete('onboarding_redirect')
-
-  // Validate HMAC
-  const secret = process.env.SHOPIFY_CLIENT_SECRET
-  if (!secret || !validateHmac(searchParams, secret)) {
-    return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=error&message=invalid_hmac`
-    )
-  }
-
-  const code = searchParams.get('code')
-  const shop = searchParams.get('shop') || storedShop
-
-  if (!code || !shop) {
-    return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=error&message=missing_params`
-    )
-  }
-
+export async function GET(request: NextRequest) {
   try {
-    // Exchange code for access token
-    const tokenResponse = await fetch(`https://${shop}/admin/oauth/access_token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: process.env.SHOPIFY_CLIENT_ID,
-        client_secret: process.env.SHOPIFY_CLIENT_SECRET,
-        code,
-      }),
-    })
+    const searchParams = request.nextUrl.searchParams
+    const cookieStore = await cookies()
+    const state = searchParams.get('state')
+    const storedState = cookieStore.get('shopify_oauth_state')?.value
+    const storedShop = cookieStore.get('shopify_shop')?.value
 
-    if (!tokenResponse.ok) {
-      throw new Error('Failed to exchange code for token')
-    }
-
-    const tokenData = await tokenResponse.json() as { access_token: string; scope: string }
-    const accessToken = tokenData.access_token
-
-    // Get Supabase client and user
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=error&message=unauthorized`
+    if (!state || !storedState || !safeEqual(state, storedState)) {
+      return redirectTo(
+        request,
+        '/dashboard/settings?shopify=error&message=state_mismatch&reason=csrf_state_invalid'
       )
     }
 
-    // Get organization ID
-    const { data: profile } = await supabase
+    cookieStore.delete('shopify_oauth_state')
+    cookieStore.delete('shopify_shop')
+
+    const fromOnboarding = cookieStore.get('onboarding_redirect')?.value === '1'
+    if (fromOnboarding) cookieStore.delete('onboarding_redirect')
+
+    const secret = process.env.SHOPIFY_CLIENT_SECRET
+    if (!secret || !validateHmac(searchParams, secret)) {
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=invalid_hmac')
+    }
+
+    const code = searchParams.get('code')
+    const shop = searchParams.get('shop') || storedShop
+    if (!code || !shop) {
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=missing_params')
+    }
+
+    const tokenResponse = await fetchWithTimeout(
+      `https://${shop}/admin/oauth/access_token`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: process.env.SHOPIFY_CLIENT_ID,
+          client_secret: process.env.SHOPIFY_CLIENT_SECRET,
+          code,
+        }),
+      },
+      PROVIDER_TIMEOUT_MS
+    )
+
+    if (!tokenResponse.ok) {
+      const details = await tokenResponse.text()
+      const looksLikeTokenError = /(expired|invalid|denied|revoked|code)/i.test(details)
+      console.error('Shopify token exchange failed:', details)
+      return redirectTo(
+        request,
+        `/dashboard/settings?shopify=error&message=${
+          looksLikeTokenError ? 'token_invalid' : 'token_exchange_failed'
+        }`
+      )
+    }
+
+    const tokenData = (await tokenResponse.json()) as { access_token?: string; scope?: string }
+    const accessToken = tokenData.access_token
+    if (!accessToken) {
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=token_invalid')
+    }
+
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError) {
+      console.error('Shopify OAuth session error:', userError.message)
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=session')
+    }
+
+    if (!user) {
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=unauthorized')
+    }
+
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('organization_id')
       .eq('id', user.id)
       .single()
 
-    if (!profile) {
-      return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=error&message=no_org`
-      )
+    if (profileError || !profile) {
+      if (profileError) console.error('Shopify OAuth profile error:', profileError.message)
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=no_org')
     }
 
     const orgId = (profile as { organization_id: string }).organization_id
 
-    // Check integration limit (only for new integrations, not reconnections)
     const { data: existingShopify } = await supabase
       .from('integrations')
       .select('id')
@@ -136,43 +181,47 @@ export async function GET(request: Request) {
     if (!existingShopify || existingShopify.length === 0) {
       const integrationCheck = await checkFeatureAccess(orgId, 'integrations')
       if (!integrationCheck.allowed) {
-        return NextResponse.redirect(
-          `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=error&message=plan_limit`
-        )
+        return redirectTo(request, '/dashboard/settings?shopify=error&message=plan_limit')
       }
     }
 
-    // Upsert integration (Shopify tokens are permanent, no refresh needed)
     const { error: upsertError } = await supabase
       .from('integrations')
-      .upsert({
-        organization_id: orgId,
-        provider: 'shopify',
-        status: 'active',
-        access_token: accessToken,
-        refresh_token: null, // Shopify doesn't use refresh tokens
-        token_expires_at: null, // Permanent token
-        metadata: { shop, scope: tokenData.scope },
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'organization_id,provider',
-      })
+      .upsert(
+        {
+          organization_id: orgId,
+          provider: 'shopify',
+          status: 'active',
+          access_token: accessToken,
+          refresh_token: null,
+          token_expires_at: null,
+          metadata: { shop, scope: tokenData.scope ?? null },
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'organization_id,provider',
+        }
+      )
 
     if (upsertError) {
       console.error('Failed to save Shopify integration:', upsertError.message)
-      return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=error&message=save_failed`
-      )
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=save_failed')
     }
 
     const successUrl = fromOnboarding
-      ? `${process.env.NEXTAUTH_URL}/dashboard/onboarding?step=3&connected=shopify`
-      : `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=success`
-    return NextResponse.redirect(successUrl)
+      ? '/dashboard/onboarding?step=3&connected=shopify'
+      : '/dashboard/settings?shopify=success'
+    return redirectTo(request, successUrl)
   } catch (error) {
+    if (error instanceof ProviderTimeoutError) {
+      console.error('Shopify OAuth provider timeout:', error.message)
+      return redirectTo(
+        request,
+        '/dashboard/settings?shopify=error&message=provider_timeout&reason=shopify_unavailable'
+      )
+    }
+
     console.error('Shopify OAuth error:', error instanceof Error ? error.message : 'Unknown error')
-    return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard/settings?shopify=error&message=exchange_failed`
-    )
+    return redirectTo(request, '/dashboard/settings?shopify=error&message=exchange_failed')
   }
 }

@@ -3,20 +3,19 @@ import { getTickets } from '@/lib/actions/tickets'
 import DashboardClient from './client-page'
 import type { MockTicket } from '@/lib/mock-data'
 
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams?: { ticket?: string | string[] }
+export default async function DashboardPage(props: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const searchParams = await props.searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const tickets: MockTicket[] = await getTickets()
   const { data: profile } = user
     ? await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .maybeSingle()
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .maybeSingle()
     : { data: null }
 
   const organizationId =

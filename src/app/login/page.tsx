@@ -7,10 +7,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8 rounded-xl border border-foreground/10 bg-background p-8 shadow-lg">
         <div className="text-center">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            SAV IA
+            Savly
           </h1>
           <p className="mt-2 text-sm text-foreground/60">
-            Connectez-vous ou créez un compte
+            Connectez-vous à votre espace
           </p>
         </div>
         <Suspense>

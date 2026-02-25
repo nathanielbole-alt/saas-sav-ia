@@ -104,7 +104,7 @@ export async function getTickets(): Promise<MockTicket[]> {
           senderType: m.sender_type as MockMessage['senderType'],
           senderName:
             m.sender_type === 'ai'
-              ? 'SAV IA'
+              ? 'Savly'
               : m.sender_type === 'agent'
                 ? agentName
                 : customer.name,
@@ -211,7 +211,7 @@ export async function getMyTickets(): Promise<MockTicket[]> {
           senderType: m.sender_type as MockMessage['senderType'],
           senderName:
             m.sender_type === 'ai'
-              ? 'SAV IA'
+              ? 'Savly'
               : m.sender_type === 'agent'
                 ? agentName
                 : customer.name,

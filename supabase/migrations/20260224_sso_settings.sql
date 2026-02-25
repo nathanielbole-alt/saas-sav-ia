@@ -1,0 +1,5 @@
+ALTER TABLE organizations
+  ADD COLUMN IF NOT EXISTS sso_enabled BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS sso_provider TEXT,
+  ADD COLUMN IF NOT EXISTS sso_idp_metadata_url TEXT,
+  ADD COLUMN IF NOT EXISTS sso_connection_id TEXT;

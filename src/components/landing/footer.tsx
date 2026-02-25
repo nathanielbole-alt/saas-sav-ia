@@ -19,34 +19,37 @@ const footerLinks = {
     { label: 'Contact', href: '#' },
   ],
   Legal: [
-    { label: 'CGU', href: '#' },
-    { label: 'Confidentialité', href: '#' },
-    { label: 'Mentions légales', href: '#' },
+    { label: 'CGU', href: '/cgu' },
+    { label: 'Confidentialité', href: '/confidentialite' },
+    { label: 'Mentions légales', href: '/mentions-legales' },
+    { label: 'Cookies', href: '/cookies' },
   ],
 }
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/[0.06] bg-[#09090b]">
+    <footer className="border-t border-white/[0.06] bg-[#0B0B0F]">
       {/* CTA band */}
-      <div className="mx-auto max-w-7xl px-6 py-20">
-        <div className="relative overflow-hidden rounded-xl border border-[#8b5cf6]/15 bg-[#8b5cf6]/[0.02] p-10 sm:p-14">
-          {/* Glow */}
-          <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-[#8b5cf6]/[0.06] blur-[80px]" />
-
+      <div className="mx-auto max-w-[1400px] px-6 py-20">
+        <div
+          className="relative overflow-hidden rounded-xl border border-[#E8856C]/15 bg-[#E8856C]/[0.02] p-10 sm:p-14"
+          style={{
+            boxShadow: 'inset 0 1px 0 rgba(232,133,108,0.06)',
+          }}
+        >
           <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-[#EDEDED] sm:text-3xl">
                 Prêt à automatiser votre SAV ?
               </h2>
-              <p className="mt-2 max-w-md text-sm text-zinc-500">
+              <p className="mt-2 max-w-md text-sm text-[#777]">
                 Créez votre compte en 30 secondes. Essai gratuit 7 jours, sans
                 carte bancaire.
               </p>
             </div>
             <Link
-              href="/login"
-              className="group inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#8b5cf6] px-6 py-3 font-mono text-sm font-semibold text-[#09090b] transition-all hover:bg-[#a78bfa] hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]"
+              href="/signup"
+              className="group inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#E8856C] px-6 py-3 text-sm font-semibold text-[#0B0B0F] transition-all hover:bg-[#F09E8A] active:scale-[0.97]"
             >
               Commencer
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -56,12 +59,12 @@ export function Footer() {
       </div>
 
       {/* Security badges */}
-      <div className="mx-auto max-w-7xl px-6">
+      <div className="mx-auto max-w-[1400px] px-6">
         <div className="flex flex-wrap items-center justify-center gap-8 border-t border-white/[0.06] py-8">
           {security.map((item) => (
             <div
               key={item.label}
-              className="flex items-center gap-2 text-sm text-zinc-600"
+              className="flex items-center gap-2 text-sm text-[#777]"
             >
               <item.icon className="h-4 w-4" />
               <span>{item.label}</span>
@@ -71,19 +74,19 @@ export function Footer() {
       </div>
 
       {/* Links grid */}
-      <div className="mx-auto max-w-7xl px-6 pb-12">
+      <div className="mx-auto max-w-[1400px] px-6 pb-12">
         <div className="grid gap-8 sm:grid-cols-4">
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#8b5cf6]">
-                <span className="text-xs font-black text-[#09090b]">S</span>
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#E8856C]">
+                <span className="text-xs font-black text-[#0B0B0F]">S</span>
               </div>
-              <span className="text-[15px] font-semibold tracking-tight text-white">
-                SAV IA
+              <span className="text-[15px] font-semibold tracking-tight text-[#EDEDED]">
+                Savly
               </span>
             </Link>
-            <p className="mt-3 text-sm text-zinc-600">
+            <p className="mt-3 text-sm text-[#777]">
               Votre SAV, en pilote automatique.
             </p>
           </div>
@@ -91,7 +94,7 @@ export function Footer() {
           {/* Link columns */}
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
-              <h4 className="font-mono text-xs font-medium uppercase tracking-widest text-zinc-500">
+              <h4 className="text-xs font-medium uppercase tracking-widest text-[#888]">
                 {title}
               </h4>
               <ul className="mt-4 space-y-2.5">
@@ -99,7 +102,7 @@ export function Footer() {
                   <li key={link.label}>
                     <a
                       href={link.href}
-                      className="text-sm text-zinc-600 transition-colors hover:text-zinc-300"
+                      className="text-sm text-[#777] transition-colors hover:text-[#EDEDED]"
                     >
                       {link.label}
                     </a>
@@ -113,11 +116,11 @@ export function Footer() {
 
       {/* Bottom bar */}
       <div className="border-t border-white/[0.06]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-          <p className="font-mono text-xs text-zinc-700">
-            &copy; {new Date().getFullYear()} SAV IA
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-6">
+          <p className="text-xs text-[#777]">
+            &copy; {new Date().getFullYear()} Savly
           </p>
-          <p className="font-mono text-xs text-zinc-700">Made in France</p>
+          <p className="text-xs text-[#777]">Made in France</p>
         </div>
       </div>
     </footer>

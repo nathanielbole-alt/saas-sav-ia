@@ -48,7 +48,7 @@ function mapMessageRow(
     senderType: message.sender_type,
     senderName:
       message.sender_type === 'ai'
-        ? 'SAV IA'
+        ? 'Savly'
         : message.sender_type === 'agent'
           ? agentDisplayName
           : customerName,

@@ -193,10 +193,10 @@ const statusConfig: Record<
   MockTicket['status'],
   { bg: string; text: string; icon: typeof AlertCircle; label: string }
 > = {
-  open: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: AlertCircle, label: 'Ouvert' },
-  pending: { bg: 'bg-amber-500/10', text: 'text-amber-400', icon: Clock, label: 'En attente' },
-  resolved: { bg: 'bg-blue-500/10', text: 'text-blue-400', icon: CheckCircle2, label: 'Résolu' },
-  closed: { bg: 'bg-zinc-500/10', text: 'text-zinc-500', icon: CheckCircle2, label: 'Fermé' },
+  open: { bg: 'bg-[#30d158]/10', text: 'text-[#30d158]', icon: AlertCircle, label: 'Ouvert' },
+  pending: { bg: 'bg-[#ffd60a]/10', text: 'text-[#ffd60a]', icon: Clock, label: 'En attente' },
+  resolved: { bg: 'bg-[#E8856C]/10', text: 'text-[#E8856C]', icon: CheckCircle2, label: 'Résolu' },
+  closed: { bg: 'bg-[white/[0.02]]', text: 'text-[#888]', icon: CheckCircle2, label: 'Fermé' },
 }
 
 const channelLabels: Record<MockTicket['channel'], { icon: typeof Mail; label: string }> = {
@@ -213,11 +213,11 @@ const channelLabels: Record<MockTicket['channel'], { icon: typeof Mail; label: s
 function EmptyState() {
   return (
     <div className="flex h-full flex-col items-center justify-center text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] mb-5">
-        <Inbox className="h-7 w-7 text-zinc-600" />
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#131316] mb-5">
+        <Inbox className="h-7 w-7 text-[#555]" />
       </div>
-      <h3 className="text-lg font-bold text-white tracking-tight">Aucun ticket sélectionné</h3>
-      <p className="mt-2 text-[13px] text-zinc-500 max-w-xs leading-relaxed">
+      <h3 className="text-[17px] font-semibold text-[#EDEDED] tracking-tight">Aucun ticket sélectionné</h3>
+      <p className="mt-2 text-[13px] text-[#888] max-w-xs leading-relaxed">
         Sélectionnez une conversation dans la liste pour commencer.
       </p>
     </div>
@@ -286,17 +286,17 @@ export function TicketDetail({
     !feedbackSubmitted
 
   return (
-    <div className="flex h-full flex-1 flex-col overflow-hidden">
+    <div className="flex h-full flex-1 flex-col overflow-hidden bg-[#0B0B0F]">
       {/* Header */}
-      <div className="shrink-0 border-b border-white/[0.06] px-6 py-5">
+      <div className="shrink-0 border-b border-[white/[0.06]] px-6 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-2">
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold text-white tracking-tight leading-none">
+              <h2 className="text-[17px] font-semibold text-[#EDEDED] tracking-tight leading-none">
                 {ticket.subject}
               </h2>
               <span className={cn(
-                "inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ring-1 ring-white/[0.06]",
+                "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider",
                 status.bg,
                 status.text
               )}>
@@ -307,14 +307,14 @@ export function TicketDetail({
 
             <div className="flex items-center gap-3 text-sm">
               <div className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded-md bg-white/[0.06] flex items-center justify-center">
-                  <User className="h-3 w-3 text-zinc-500" />
+                <div className="h-5 w-5 rounded-full bg-[#1A1A1F] flex items-center justify-center">
+                  <User className="h-3 w-3 text-[#888]" />
                 </div>
-                <span className="text-[13px] font-medium text-zinc-300">{ticket.customer.name}</span>
-                <span className="font-mono text-[11px] text-zinc-600">{ticket.customer.email}</span>
+                <span className="text-[13px] font-medium text-[#EDEDED]">{ticket.customer.name}</span>
+                <span className="text-[12px] text-[#555]">{ticket.customer.email}</span>
               </div>
-              <div className="w-px h-3 bg-white/[0.06]" />
-              <div className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-600">
+              <div className="w-px h-3 bg-[white/[0.06]]" />
+              <div className="flex items-center gap-1.5 text-[12px] text-[#555]">
                 <ChannelIcon className="h-3 w-3" />
                 <span>via {channel.label}</span>
               </div>
@@ -322,10 +322,10 @@ export function TicketDetail({
           </div>
 
           <div className="flex items-center gap-1.5">
-            <button aria-label="Appeler" className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-zinc-300 hover:border-white/[0.1] transition-all duration-200">
+            <button aria-label="Appeler" className="p-2 rounded-lg bg-[#131316] text-[#888] hover:text-[#EDEDED] transition-colors duration-150">
               <Phone className="h-4 w-4" />
             </button>
-            <button aria-label="Options" className="p-2 rounded-lg border border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-zinc-300 hover:border-white/[0.1] transition-all duration-200">
+            <button aria-label="Options" className="p-2 rounded-lg bg-[#131316] text-[#888] hover:text-[#EDEDED] transition-colors duration-150">
               <MoreVertical className="h-4 w-4" />
             </button>
           </div>
@@ -337,7 +337,7 @@ export function TicketDetail({
             {ticket.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-md bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] text-zinc-500 border border-white/[0.06]"
+                className="rounded-md bg-[white/[0.02]] px-2 py-0.5 text-[11px] text-[#888]"
               >
                 #{tag}
               </span>
@@ -351,63 +351,51 @@ export function TicketDetail({
         <div className="mx-auto flex h-full w-full max-w-[1320px] gap-5">
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto space-y-6 scroll-smooth"
+            className="flex-1 overflow-y-auto space-y-5 scroll-smooth"
           >
-            <div className="mx-auto max-w-3xl space-y-6">
+            <div className="mx-auto max-w-3xl space-y-5">
               {ticket.messages.map((msg) => {
                 const isMe = msg.senderType === 'agent'
                 const isAI = msg.senderType === 'ai'
 
                 return (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      "flex gap-3 group",
-                      isMe ? "flex-row-reverse" : "flex-row"
-                    )}
-                  >
-                    {/* Avatar */}
-                    <div className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-mono text-[10px] font-bold transition-all duration-200",
-                      isMe
-                        ? "bg-[#8b5cf6] text-white"
-                        : isAI
-                          ? "bg-[#8b5cf6]/15 text-[#8b5cf6] ring-1 ring-[#8b5cf6]/20"
-                          : "bg-white/[0.06] text-zinc-400"
-                    )}>
-                      {isAI ? <Sparkles className="h-4 w-4" /> : getInitials(msg.senderName)}
+                  <div key={msg.id} className="group">
+                    {/* Sender info */}
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <div className={cn(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
+                        isMe
+                          ? "bg-[#E8856C] text-white"
+                          : isAI
+                            ? "bg-[#E8856C]/15 text-[#E8856C]"
+                            : "bg-[#1A1A1F] text-[#888]"
+                      )}>
+                        {isAI ? <Sparkles className="h-3.5 w-3.5" /> : getInitials(msg.senderName)}
+                      </div>
+                      <span className="text-[13px] font-medium text-[#EDEDED]">
+                        {msg.senderName}
+                      </span>
+                      {isAI && (
+                        <span className="flex items-center gap-1 rounded-md bg-[#E8856C]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#E8856C]">
+                          <Bot className="h-2.5 w-2.5" />
+                          IA
+                        </span>
+                      )}
+                      <span className="text-[11px] text-[#555]">
+                        {formatDate(msg.createdAt)}
+                      </span>
                     </div>
 
-                    {/* Bubble */}
+                    {/* Message body — linear layout, not bubbles */}
                     <div className={cn(
-                      "flex flex-col max-w-[75%]",
-                      isMe ? "items-end" : "items-start"
+                      "ml-[36px] rounded-xl p-4 text-[14px] leading-relaxed",
+                      isMe
+                        ? "bg-[#131316] text-[#EDEDED]"
+                        : isAI
+                          ? "bg-[#E8856C]/[0.06] border border-[#E8856C]/10 text-[#EDEDED]"
+                          : "bg-[#131316] text-[#EDEDED]"
                     )}>
-                      <div className="flex items-center gap-2 mb-1.5 px-0.5">
-                        <span className="text-[12px] font-medium text-zinc-400">
-                          {msg.senderName}
-                        </span>
-                        <span className="font-mono text-[10px] text-zinc-700">
-                          {formatDate(msg.createdAt)}
-                        </span>
-                        {isAI && (
-                          <span className="flex items-center gap-1 rounded-md bg-[#8b5cf6]/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-[#8b5cf6] ring-1 ring-[#8b5cf6]/20">
-                            <Bot className="h-2.5 w-2.5" />
-                            IA
-                          </span>
-                        )}
-                      </div>
-
-                      <div className={cn(
-                        "rounded-xl p-4 text-[14px] leading-relaxed transition-all duration-200",
-                        isMe
-                          ? "bg-[#8b5cf6] text-white rounded-tr-sm"
-                          : isAI
-                            ? "bg-[#8b5cf6]/[0.06] ring-1 ring-[#8b5cf6]/15 text-zinc-200 rounded-tl-sm"
-                            : "bg-white/[0.04] ring-1 ring-white/[0.06] text-zinc-300 rounded-tl-sm"
-                      )}>
-                        <p className="whitespace-pre-line">{msg.body}</p>
-                      </div>
+                      <p className="whitespace-pre-line">{msg.body}</p>
                     </div>
                   </div>
                 )
@@ -421,12 +409,12 @@ export function TicketDetail({
           {refundsPreview ? (
             <aside className="hidden w-[300px] shrink-0 xl:block">
               <div className="space-y-3">
-                <section className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <section className="rounded-xl bg-[#131316] p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <h3 className="font-mono text-[10px] font-medium uppercase tracking-widest text-zinc-500">
+                    <h3 className="text-[11px] font-medium uppercase tracking-wider text-[#888]">
                       Retours & Remboursements
                     </h3>
-                    <span className="inline-flex items-center rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-400">
+                    <span className="inline-flex items-center rounded-full bg-[#ffd60a]/10 px-2 py-0.5 text-[11px] font-medium text-[#ffd60a]">
                       {refundsPreview.count}
                     </span>
                   </div>
@@ -435,27 +423,27 @@ export function TicketDetail({
                     {refundsPreview.refunds.map((refund) => (
                       <div
                         key={refund.id}
-                        className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3"
+                        className="rounded-lg bg-[#1A1A1F] p-3"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-[12px] font-medium text-zinc-300">
+                          <p className="text-[13px] font-medium text-[#EDEDED]">
                             {refund.orderName}
                           </p>
                           <span
                             className={cn(
-                              'rounded-md px-1.5 py-0.5 font-mono text-[9px] font-bold ring-1',
+                              'rounded-md px-1.5 py-0.5 text-[10px] font-medium',
                               refund.status === 'total'
-                                ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
-                                : 'bg-amber-500/10 text-amber-400 ring-amber-500/20'
+                                ? 'bg-[#30d158]/10 text-[#30d158]'
+                                : 'bg-[#ffd60a]/10 text-[#ffd60a]'
                             )}
                           >
                             {refund.status === 'total' ? 'TOTAL' : 'PARTIEL'}
                           </span>
                         </div>
-                        <p className="mt-1 font-mono text-[11px] font-medium text-zinc-400">
+                        <p className="mt-1 text-[12px] font-medium text-[#888]">
                           {formatCurrencyAmount(refund.refundedAmount)}
                         </p>
-                        <p className="mt-0.5 font-mono text-[10px] text-zinc-600">
+                        <p className="mt-0.5 text-[11px] text-[#555]">
                           {formatRefundDate(refund.refundedAt)}
                         </p>
                       </div>
@@ -471,10 +459,10 @@ export function TicketDetail({
       {/* Feedback Widget */}
       {showFeedback && (
         <div className="shrink-0 px-6 pb-2 z-20">
-          <div className="max-w-3xl mx-auto rounded-xl border border-amber-500/15 bg-amber-500/[0.03] p-4">
+          <div className="max-w-3xl mx-auto rounded-xl bg-[#131316] p-4">
             <div className="flex items-center gap-2 mb-3">
-              <MessageSquare className="h-4 w-4 text-amber-400" />
-              <h4 className="text-[13px] font-semibold text-amber-300">Comment évaluez-vous cette résolution ?</h4>
+              <MessageSquare className="h-4 w-4 text-[#ffd60a]" />
+              <h4 className="text-[13px] font-medium text-[#EDEDED]">Comment évaluez-vous cette résolution ?</h4>
             </div>
 
             <div className="flex items-center gap-1 mb-3">
@@ -491,14 +479,14 @@ export function TicketDetail({
                     className={cn(
                       'h-6 w-6 transition-colors',
                       star <= (hoveredStar || selectedRating)
-                        ? 'text-amber-400 fill-amber-400'
-                        : 'text-zinc-700'
+                        ? 'text-[#ffd60a] fill-[#ffd60a]'
+                        : 'text-[#555]'
                     )}
                   />
                 </button>
               ))}
               {selectedRating > 0 && (
-                <span className="ml-2 font-mono text-[11px] text-amber-400/70">
+                <span className="ml-2 text-[11px] text-[#888]">
                   {selectedRating}/5
                 </span>
               )}
@@ -509,17 +497,17 @@ export function TicketDetail({
               onChange={(e) => setFeedbackComment(e.target.value)}
               placeholder="Commentaire optionnel..."
               rows={2}
-              className="w-full resize-none rounded-lg bg-white/[0.04] border border-white/[0.06] px-3 py-2 font-mono text-[13px] text-zinc-200 placeholder:text-zinc-700 outline-none focus:border-amber-500/30 mb-3 transition-all duration-200"
+              className="w-full resize-none rounded-lg bg-[#1A1A1F] px-3 py-2 text-[13px] text-[#EDEDED] placeholder:text-[#555] outline-none focus:ring-1 focus:ring-[#E8856C]/50 mb-3 transition-all duration-150"
             />
 
             <button
               onClick={handleFeedbackSubmit}
               disabled={selectedRating < 1 || feedbackSubmitting}
               className={cn(
-                'flex items-center gap-2 rounded-lg px-4 py-2 font-mono text-[12px] font-bold transition-all active:scale-95',
+                'flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-medium transition-all active:scale-95',
                 selectedRating >= 1 && !feedbackSubmitting
-                  ? 'bg-amber-500 text-black hover:bg-amber-400'
-                  : 'bg-white/[0.06] text-zinc-600 cursor-not-allowed'
+                  ? 'bg-[#E8856C] text-white hover:bg-[#E8856C]'
+                  : 'bg-[#1A1A1F] text-[#555] cursor-not-allowed'
               )}
             >
               {feedbackSubmitting ? (
@@ -538,47 +526,47 @@ export function TicketDetail({
       {/* Submitted confirmation */}
       {feedbackSubmitted && (
         <div className="shrink-0 px-6 pb-2 z-20">
-          <div className="max-w-3xl mx-auto rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-4 text-center">
-            <CheckCircle2 className="h-5 w-5 text-emerald-400 mx-auto mb-1.5" />
-            <p className="font-mono text-[12px] text-emerald-400">Merci pour votre feedback !</p>
+          <div className="max-w-3xl mx-auto rounded-xl bg-[#30d158]/[0.06] border border-[#30d158]/10 p-4 text-center">
+            <CheckCircle2 className="h-5 w-5 text-[#30d158] mx-auto mb-1.5" />
+            <p className="text-[13px] text-[#30d158]">Merci pour votre feedback !</p>
           </div>
         </div>
       )}
 
-      {/* Input */}
+      {/* Composer */}
       <div className="shrink-0 p-5 z-30">
-        <div className="max-w-3xl mx-auto rounded-xl border border-white/[0.06] bg-[#0a0a0e] transition-all duration-200 focus-within:border-[#8b5cf6]/30 focus-within:shadow-[0_0_20px_rgba(139,92,246,0.06)]">
+        <div className="max-w-3xl mx-auto rounded-xl bg-[#131316] transition-all duration-150 focus-within:ring-1 focus-within:ring-[#E8856C]/30">
           <textarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Écrivez une réponse..."
             rows={1}
-            className="w-full resize-none bg-transparent px-5 py-4 text-[14px] text-white outline-none placeholder:text-zinc-700 min-h-[72px]"
+            className="w-full resize-none bg-transparent px-5 py-4 text-[14px] text-[#EDEDED] outline-none placeholder:text-[#555] min-h-[72px]"
           />
 
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/[0.04]">
+          <div className="flex items-center justify-between px-4 py-2.5 border-t border-[white/[0.04]]">
             <div className="flex items-center gap-1">
-              <button aria-label="Joindre un fichier" className="p-2 rounded-lg text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.04] transition-all duration-200">
+              <button aria-label="Joindre un fichier" className="p-2 rounded-lg text-[#555] hover:text-[#888] hover:bg-[white/[0.04]] transition-colors duration-150">
                 <Paperclip className="h-4 w-4" />
               </button>
-              <button aria-label="Emoji" className="p-2 rounded-lg text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.04] transition-all duration-200">
+              <button aria-label="Emoji" className="p-2 rounded-lg text-[#555] hover:text-[#888] hover:bg-[white/[0.04]] transition-colors duration-150">
                 <Smile className="h-4 w-4" />
               </button>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] text-zinc-700 hidden sm:block">
+              <span className="text-[11px] text-[#555] hidden sm:block">
                 ⌘ + Enter
               </span>
               <button
                 onClick={handleSend}
                 disabled={!reply.trim()}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-4 py-1.5 font-mono text-[12px] font-bold transition-all duration-200 active:scale-95",
+                  "flex items-center gap-2 rounded-lg px-4 py-1.5 text-[13px] font-medium transition-all duration-150 active:scale-95",
                   reply.trim()
-                    ? "bg-[#8b5cf6] text-white hover:bg-[#a78bfa] shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                    : "bg-white/[0.06] text-zinc-600 cursor-not-allowed"
+                    ? "bg-[#E8856C] text-white hover:bg-[#E8856C]"
+                    : "bg-[#1A1A1F] text-[#555] cursor-not-allowed"
                 )}
               >
                 <span>Envoyer</span>

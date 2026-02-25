@@ -21,6 +21,13 @@ export type Database = {
           subscription_status: 'active' | 'trialing' | 'past_due' | 'canceled'
           refund_policy: string | null
           sav_policy: string | null
+          brand_logo_url: string | null
+          brand_accent_color: string | null
+          brand_email_footer: string | null
+          sso_enabled: boolean
+          sso_provider: string | null
+          sso_idp_metadata_url: string | null
+          sso_connection_id: string | null
           created_at: string
           updated_at: string
         }
@@ -32,6 +39,13 @@ export type Database = {
           subscription_status?: 'active' | 'trialing' | 'past_due' | 'canceled'
           refund_policy?: string | null
           sav_policy?: string | null
+          brand_logo_url?: string | null
+          brand_accent_color?: string | null
+          brand_email_footer?: string | null
+          sso_enabled?: boolean
+          sso_provider?: string | null
+          sso_idp_metadata_url?: string | null
+          sso_connection_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -43,6 +57,13 @@ export type Database = {
           subscription_status?: 'active' | 'trialing' | 'past_due' | 'canceled'
           refund_policy?: string | null
           sav_policy?: string | null
+          brand_logo_url?: string | null
+          brand_accent_color?: string | null
+          brand_email_footer?: string | null
+          sso_enabled?: boolean
+          sso_provider?: string | null
+          sso_idp_metadata_url?: string | null
+          sso_connection_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -472,7 +493,19 @@ export type Database = {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      check_rate_limit: {
+        Args: {
+          p_key: string
+          p_max_requests: number
+          p_window_ms: number
+        }
+        Returns: {
+          success: boolean
+          remaining: number
+        }[]
+      }
+    }
     Enums: {
       user_role: 'owner' | 'admin' | 'agent'
       ticket_status: 'open' | 'pending' | 'resolved' | 'closed'

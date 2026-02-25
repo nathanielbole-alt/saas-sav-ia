@@ -8,10 +8,12 @@ import { Pricing } from '@/components/landing/pricing'
 import { FAQ } from '@/components/landing/faq'
 import { UseCases } from '@/components/landing/use-cases'
 import { Footer } from '@/components/landing/footer'
+import { FloatingSpheres } from '@/components/landing/floating-spheres'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#09090b]">
+    <div className="relative min-h-[100dvh] bg-[#0B0B0F]">
+      <FloatingSpheres />
       <Navbar />
       <Hero />
       <Problems />

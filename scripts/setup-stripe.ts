@@ -15,19 +15,19 @@ type PlanSetup = {
 const PLAN_SETUPS: PlanSetup[] = [
   {
     plan: 'pro',
-    productName: 'SAV IA Pro',
+    productName: 'Savly Pro',
     amountCents: 2900,
     envKey: 'STRIPE_PRO_PRICE_ID',
   },
   {
     plan: 'business',
-    productName: 'SAV IA Business',
+    productName: 'Savly Business',
     amountCents: 7900,
     envKey: 'STRIPE_BUSINESS_PRICE_ID',
   },
   {
     plan: 'enterprise',
-    productName: 'SAV IA Enterprise',
+    productName: 'Savly Enterprise',
     amountCents: 14900,
     envKey: 'STRIPE_ENTERPRISE_PRICE_ID',
   },

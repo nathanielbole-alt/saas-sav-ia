@@ -66,8 +66,8 @@ const INTEGRATIONS = [
     description: 'Recevez et repondez aux emails de support',
     icon: Mail,
     href: '/api/integrations/gmail',
-    color: 'from-red-500/20 to-orange-500/20',
-    accent: 'text-red-400',
+    iconBg: 'bg-[#ff453a]/10',
+    accent: 'text-[#ff453a]',
   },
   {
     id: 'shopify',
@@ -75,8 +75,8 @@ const INTEGRATIONS = [
     description: 'Synchronisez commandes et clients',
     icon: ShoppingBag,
     href: '/api/integrations/shopify',
-    color: 'from-green-500/20 to-emerald-500/20',
-    accent: 'text-green-400',
+    iconBg: 'bg-[#30d158]/10',
+    accent: 'text-[#30d158]',
     needsShop: true,
   },
   {
@@ -85,8 +85,8 @@ const INTEGRATIONS = [
     description: 'Gerez vos messages Instagram',
     icon: Instagram,
     href: '/api/integrations/meta',
-    color: 'from-pink-500/20 to-purple-500/20',
-    accent: 'text-pink-400',
+    iconBg: 'bg-[#bf5af2]/10',
+    accent: 'text-[#bf5af2]',
     providerKey: 'meta',
   },
   {
@@ -95,8 +95,8 @@ const INTEGRATIONS = [
     description: 'Repondez aux messages Facebook',
     icon: MessageCircle,
     href: '/api/integrations/meta',
-    color: 'from-blue-500/20 to-indigo-500/20',
-    accent: 'text-blue-400',
+    iconBg: 'bg-[#E8856C]/10',
+    accent: 'text-[#E8856C]',
     providerKey: 'meta',
   },
 ]
@@ -108,22 +108,22 @@ const FEATURES = [
     icon: Bot,
     title: 'IA Automatique',
     description: "L'IA repond a vos clients 24/7",
-    color: 'from-violet-500/20 to-fuchsia-500/20',
-    accent: 'text-violet-400',
+    iconBg: 'bg-[#E8856C]/10',
+    accent: 'text-[#E8856C]',
   },
   {
     icon: Radio,
     title: 'Multi-canal',
     description: 'Email, Instagram, Messenger, Shopify',
-    color: 'from-blue-500/20 to-cyan-500/20',
-    accent: 'text-blue-400',
+    iconBg: 'bg-[#30d158]/10',
+    accent: 'text-[#30d158]',
   },
   {
     icon: Zap,
     title: 'Temps reel',
     description: 'Notifications et mises a jour instantanees',
-    color: 'from-amber-500/20 to-orange-500/20',
-    accent: 'text-amber-400',
+    iconBg: 'bg-[#ff9f0a]/10',
+    accent: 'text-[#ff9f0a]',
   },
 ]
 
@@ -289,9 +289,9 @@ export default function OnboardingClient({
               transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
               className="relative mb-8"
             >
-              <div className="absolute inset-0 bg-violet-500/30 blur-3xl rounded-full" />
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 ring-1 ring-white/10 backdrop-blur-xl">
-                <Sparkles className="h-12 w-12 text-violet-400" />
+              <div className="absolute inset-0 bg-[#E8856C]/20 blur-3xl rounded-full" />
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-[#E8856C]/10">
+                <Sparkles className="h-12 w-12 text-[#E8856C]" />
               </div>
             </motion.div>
 
@@ -299,16 +299,16 @@ export default function OnboardingClient({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-400 tracking-tight mb-4"
+              className="text-3xl font-semibold text-[#EDEDED] tracking-tight mb-4"
             >
-              Bienvenue sur SAV IA !
+              Bienvenue sur Savly !
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-[15px] text-zinc-400 leading-relaxed mb-10 max-w-sm"
+              className="text-[15px] text-[#888] leading-relaxed mb-10 max-w-sm"
             >
               Configurez votre espace en quelques etapes. Connectez vos canaux
               et laissez l&apos;IA gerer votre support client.
@@ -329,17 +329,17 @@ export default function OnboardingClient({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.7 + i * 0.1 }}
-                    className="flex flex-col items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-xl ring-1 ring-white/5"
+                    className="flex flex-col items-center gap-3 rounded-2xl bg-[#131316] p-5"
                   >
                     <div className={cn(
-                      'flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ring-1 ring-white/10',
-                      feature.color
+                      'flex h-10 w-10 items-center justify-center rounded-xl',
+                      feature.iconBg
                     )}>
                       <Icon className={cn('h-5 w-5', feature.accent)} />
                     </div>
                     <div className="text-center">
-                      <p className="text-[13px] font-semibold text-white">{feature.title}</p>
-                      <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">{feature.description}</p>
+                      <p className="text-[13px] font-semibold text-[#EDEDED]">{feature.title}</p>
+                      <p className="text-[11px] text-[#888] mt-1 leading-relaxed">{feature.description}</p>
                     </div>
                   </motion.div>
                 )
@@ -353,7 +353,7 @@ export default function OnboardingClient({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setStep(2)}
-              className="flex items-center gap-2.5 rounded-2xl bg-violet-500 px-8 py-4 text-[14px] font-bold text-white shadow-lg shadow-violet-500/20 transition-colors hover:bg-violet-400"
+              className="flex items-center gap-2.5 rounded-2xl bg-[#E8856C] px-8 py-4 text-[14px] font-semibold text-white transition-colors hover:bg-[#E8856C]/80"
             >
               Commencer
               <ArrowRight className="h-4 w-4" />
@@ -370,16 +370,16 @@ export default function OnboardingClient({
           >
             <StepIndicator current={2} maxReached={maxReachedStep} onNavigate={goToStep} />
 
-            <h2 className="text-xl font-bold text-white mb-2 mt-8">
+            <h2 className="text-xl font-semibold text-[#EDEDED] mb-2 mt-8">
               Votre profil
             </h2>
-            <p className="text-[13px] text-zinc-500 mb-8">
+            <p className="text-[13px] text-[#888] mb-8">
               Ces informations nous aident a personnaliser votre experience.
             </p>
 
             <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5">
               <motion.div variants={fadeSlide}>
-                <label className="block text-[12px] font-medium text-zinc-400 mb-2">
+                <label className="block text-[12px] font-medium text-[#888] mb-2">
                   <User className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
                   Nom complet *
                 </label>
@@ -388,12 +388,12 @@ export default function OnboardingClient({
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Jean Dupont"
-                  className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-[14px] text-zinc-200 placeholder-zinc-600 outline-none transition-all focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/10"
+                  className="w-full rounded-lg bg-[#1A1A1F] px-4 py-3 text-[14px] text-[#EDEDED] placeholder-[#48484a] outline-none transition-all focus:ring-1 focus:ring-[#E8856C]/50"
                 />
               </motion.div>
 
               <motion.div variants={fadeSlide}>
-                <label className="block text-[12px] font-medium text-zinc-400 mb-2">
+                <label className="block text-[12px] font-medium text-[#888] mb-2">
                   <Building2 className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
                   Nom de l&apos;entreprise *
                 </label>
@@ -402,12 +402,12 @@ export default function OnboardingClient({
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
                   placeholder="Mon Entreprise"
-                  className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-[14px] text-zinc-200 placeholder-zinc-600 outline-none transition-all focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/10"
+                  className="w-full rounded-lg bg-[#1A1A1F] px-4 py-3 text-[14px] text-[#EDEDED] placeholder-[#48484a] outline-none transition-all focus:ring-1 focus:ring-[#E8856C]/50"
                 />
               </motion.div>
 
               <motion.div variants={fadeSlide}>
-                <label className="block text-[12px] font-medium text-zinc-400 mb-2">
+                <label className="block text-[12px] font-medium text-[#888] mb-2">
                   <Briefcase className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
                   Secteur d&apos;activite
                 </label>
@@ -415,7 +415,7 @@ export default function OnboardingClient({
                   <select
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
-                    className="w-full appearance-none rounded-xl bg-white/5 border border-white/10 px-4 py-3 pr-10 text-[14px] text-zinc-200 outline-none transition-all focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/10"
+                    className="w-full appearance-none rounded-lg bg-[#1A1A1F] px-4 py-3 pr-10 text-[14px] text-[#EDEDED] outline-none transition-all focus:ring-1 focus:ring-[#E8856C]/50"
                   >
                     <option value="">Selectionnez...</option>
                     {INDUSTRIES.map((ind) => (
@@ -424,12 +424,12 @@ export default function OnboardingClient({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
                 </div>
               </motion.div>
 
               <motion.div variants={fadeSlide}>
-                <label className="block text-[12px] font-medium text-zinc-400 mb-2">
+                <label className="block text-[12px] font-medium text-[#888] mb-2">
                   <Users className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
                   Taille d&apos;equipe
                 </label>
@@ -437,7 +437,7 @@ export default function OnboardingClient({
                   <select
                     value={teamSize}
                     onChange={(e) => setTeamSize(e.target.value)}
-                    className="w-full appearance-none rounded-xl bg-white/5 border border-white/10 px-4 py-3 pr-10 text-[14px] text-zinc-200 outline-none transition-all focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/10"
+                    className="w-full appearance-none rounded-lg bg-[#1A1A1F] px-4 py-3 pr-10 text-[14px] text-[#EDEDED] outline-none transition-all focus:ring-1 focus:ring-[#E8856C]/50"
                   >
                     <option value="">Selectionnez...</option>
                     {TEAM_SIZES.map((ts) => (
@@ -446,12 +446,12 @@ export default function OnboardingClient({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
                 </div>
               </motion.div>
 
               <motion.div variants={fadeSlide}>
-                <label className="block text-[12px] font-medium text-zinc-400 mb-2">
+                <label className="block text-[12px] font-medium text-[#888] mb-2">
                   <BarChart3 className="inline h-3.5 w-3.5 mr-1.5 -mt-0.5" />
                   Volume de tickets/mois estime
                 </label>
@@ -459,7 +459,7 @@ export default function OnboardingClient({
                   <select
                     value={ticketVolume}
                     onChange={(e) => setTicketVolume(e.target.value)}
-                    className="w-full appearance-none rounded-xl bg-white/5 border border-white/10 px-4 py-3 pr-10 text-[14px] text-zinc-200 outline-none transition-all focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/10"
+                    className="w-full appearance-none rounded-lg bg-[#1A1A1F] px-4 py-3 pr-10 text-[14px] text-[#EDEDED] outline-none transition-all focus:ring-1 focus:ring-[#E8856C]/50"
                   >
                     <option value="">Selectionnez...</option>
                     {TICKET_VOLUMES.map((tv) => (
@@ -468,7 +468,7 @@ export default function OnboardingClient({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
                 </div>
               </motion.div>
             </motion.div>
@@ -477,7 +477,7 @@ export default function OnboardingClient({
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-4 text-[12px] text-red-400"
+                className="mt-4 text-[12px] text-[#ff453a]"
               >
                 {error}
               </motion.p>
@@ -491,7 +491,7 @@ export default function OnboardingClient({
               whileTap={{ scale: 0.99 }}
               onClick={handleStep2Submit}
               disabled={loading}
-              className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-violet-500 px-6 py-3.5 text-[14px] font-bold text-white shadow-lg shadow-violet-500/20 transition-colors hover:bg-violet-400 disabled:opacity-50"
+              className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#E8856C] px-6 py-3.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#E8856C]/80 disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -514,10 +514,10 @@ export default function OnboardingClient({
           >
             <StepIndicator current={3} maxReached={maxReachedStep} onNavigate={goToStep} />
 
-            <h2 className="text-xl font-bold text-white mb-2 mt-8">
+            <h2 className="text-xl font-semibold text-[#EDEDED] mb-2 mt-8">
               Connectez un canal
             </h2>
-            <p className="text-[13px] text-zinc-500 mb-8">
+            <p className="text-[13px] text-[#888] mb-8">
               Connectez au moins un canal pour commencer a recevoir des tickets.
             </p>
 
@@ -525,10 +525,10 @@ export default function OnboardingClient({
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3"
+                className="mb-6 flex items-center gap-2.5 rounded-xl bg-[#30d158]/10 px-4 py-3"
               >
-                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                <p className="text-[13px] text-emerald-300">
+                <CheckCircle2 className="h-4 w-4 text-[#30d158] shrink-0" />
+                <p className="text-[13px] text-[#30d158]">
                   {connectedParam.charAt(0).toUpperCase() + connectedParam.slice(1)} connecte avec succes !
                 </p>
               </motion.div>
@@ -544,32 +544,32 @@ export default function OnboardingClient({
                     key={integration.id}
                     variants={fadeSlide}
                     className={cn(
-                      'flex items-center gap-4 rounded-2xl border p-4 backdrop-blur-xl transition-all',
+                      'flex items-center gap-4 rounded-2xl p-4 transition-colors',
                       connected
-                        ? 'border-emerald-500/20 bg-emerald-500/5 ring-1 ring-emerald-500/10'
-                        : 'border-white/5 bg-white/[0.02] ring-1 ring-white/5 hover:bg-white/[0.04]'
+                        ? 'bg-[#30d158]/[0.06] border border-[#30d158]/10'
+                        : 'bg-[#131316] hover:bg-[#1A1A1F]'
                     )}
                   >
                     <div className={cn(
-                      'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ring-1 ring-white/10',
-                      integration.color
+                      'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+                      integration.iconBg
                     )}>
                       <Icon className={cn('h-5 w-5', integration.accent)} />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-[14px] font-semibold text-white">
+                      <p className="text-[14px] font-semibold text-[#EDEDED]">
                         {integration.name}
                       </p>
-                      <p className="text-[12px] text-zinc-500 truncate">
+                      <p className="text-[12px] text-[#888] truncate">
                         {integration.description}
                       </p>
                     </div>
 
                     {connected ? (
-                      <div className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 ring-1 ring-emerald-500/20">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                        <span className="text-[11px] font-medium text-emerald-400">Connecte</span>
+                      <div className="flex items-center gap-1.5 rounded-lg bg-[#30d158]/10 px-3 py-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[#30d158]" />
+                        <span className="text-[11px] font-medium text-[#30d158]">Connecte</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
@@ -579,12 +579,12 @@ export default function OnboardingClient({
                             value={shopDomain}
                             onChange={(e) => setShopDomain(e.target.value)}
                             placeholder="shop.myshopify.com"
-                            className="w-44 rounded-lg bg-white/5 border border-white/10 px-3 py-1.5 text-[12px] text-zinc-200 placeholder-zinc-600 outline-none focus:border-violet-500/30"
+                            className="w-44 rounded-lg bg-[#1A1A1F] px-3 py-1.5 text-[12px] text-[#EDEDED] placeholder-[#48484a] outline-none focus:ring-1 focus:ring-[#E8856C]/50"
                           />
                         )}
                         <button
                           onClick={() => handleConnect(integration)}
-                          className="rounded-lg bg-white/5 px-4 py-1.5 text-[12px] font-medium text-zinc-300 ring-1 ring-white/10 transition-all hover:bg-white/10 hover:text-white"
+                          className="rounded-lg bg-[#1A1A1F] px-4 py-1.5 text-[12px] font-medium text-[#EDEDED] transition-colors hover:bg-[#3a3a3c]"
                         >
                           Connecter
                         </button>
@@ -599,7 +599,7 @@ export default function OnboardingClient({
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-4 text-[12px] text-red-400"
+                className="mt-4 text-[12px] text-[#ff453a]"
               >
                 {error}
               </motion.p>
@@ -613,7 +613,7 @@ export default function OnboardingClient({
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                   onClick={() => setStep(4)}
-                  className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-violet-500 px-6 py-3.5 text-[14px] font-bold text-white shadow-lg shadow-violet-500/20 transition-colors hover:bg-violet-400"
+                  className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#E8856C] px-6 py-3.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#E8856C]/80"
                 >
                   Continuer
                   <ArrowRight className="h-4 w-4" />
@@ -622,7 +622,7 @@ export default function OnboardingClient({
 
               <button
                 onClick={() => setStep(4)}
-                className="text-[12px] text-zinc-500 hover:text-zinc-300 transition-colors py-2"
+                className="text-[12px] text-[#888] hover:text-[#EDEDED] transition-colors py-2"
               >
                 Passer cette etape
               </button>
@@ -639,16 +639,16 @@ export default function OnboardingClient({
           >
             <StepIndicator current={4} maxReached={maxReachedStep} onNavigate={goToStep} />
 
-            <h2 className="text-xl font-bold text-white mb-2 mt-8">
+            <h2 className="text-xl font-semibold text-[#EDEDED] mb-2 mt-8">
               Configurez vos regles SAV
             </h2>
-            <p className="text-[13px] text-zinc-500 mb-8">
+            <p className="text-[13px] text-[#888] mb-8">
               L&apos;IA repondra selon vos politiques. Vous pourrez les modifier plus tard dans les parametres.
             </p>
 
             <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-5">
               <motion.div variants={fadeSlide}>
-                <label className="block text-[12px] font-medium text-zinc-300 mb-2">
+                <label className="block text-[12px] font-medium text-[#888] mb-2">
                   Politique de remboursement
                 </label>
                 <textarea
@@ -657,15 +657,15 @@ export default function OnboardingClient({
                   maxLength={5000}
                   placeholder="Ex: Remboursement sous 14 jours, retour a la charge du client, remboursement sous 5 jours ouvres..."
                   rows={5}
-                  className="w-full resize-y rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-[14px] text-zinc-200 placeholder:text-zinc-600 outline-none transition-all focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/30"
+                  className="w-full resize-y rounded-lg bg-[#1A1A1F] px-4 py-3 text-[14px] text-[#EDEDED] placeholder:text-[#555] outline-none transition-all focus:ring-1 focus:ring-[#E8856C]/50"
                 />
-                <p className="mt-1.5 text-[11px] text-zinc-600">
+                <p className="mt-1.5 text-[11px] text-[#555]">
                   {refundPolicy.length}/5000 caracteres
                 </p>
               </motion.div>
 
               <motion.div variants={fadeSlide}>
-                <label className="block text-[12px] font-medium text-zinc-300 mb-2">
+                <label className="block text-[12px] font-medium text-[#888] mb-2">
                   Politique SAV
                 </label>
                 <textarea
@@ -674,9 +674,9 @@ export default function OnboardingClient({
                   maxLength={5000}
                   placeholder="Ex: Garantie 2 ans, remplacement sous 48h, pas de reparation sur produits hors garantie..."
                   rows={5}
-                  className="w-full resize-y rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-[14px] text-zinc-200 placeholder:text-zinc-600 outline-none transition-all focus:border-violet-500/30 focus:ring-2 focus:ring-violet-500/30"
+                  className="w-full resize-y rounded-lg bg-[#1A1A1F] px-4 py-3 text-[14px] text-[#EDEDED] placeholder:text-[#555] outline-none transition-all focus:ring-1 focus:ring-[#E8856C]/50"
                 />
-                <p className="mt-1.5 text-[11px] text-zinc-600">
+                <p className="mt-1.5 text-[11px] text-[#555]">
                   {savPolicy.length}/5000 caracteres
                 </p>
               </motion.div>
@@ -686,7 +686,7 @@ export default function OnboardingClient({
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-4 text-[12px] text-red-400"
+                className="mt-4 text-[12px] text-[#ff453a]"
               >
                 {error}
               </motion.p>
@@ -700,7 +700,7 @@ export default function OnboardingClient({
                 whileTap={{ scale: 0.99 }}
                 onClick={handlePoliciesSubmit}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-violet-500 px-6 py-3.5 text-[14px] font-bold text-white shadow-lg shadow-violet-500/20 transition-colors hover:bg-violet-400 disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-[#E8856C] px-6 py-3.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#E8856C]/80 disabled:opacity-50"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -714,7 +714,7 @@ export default function OnboardingClient({
 
               <button
                 onClick={handlePoliciesSkip}
-                className="text-[12px] text-zinc-500 hover:text-zinc-300 transition-colors py-2"
+                className="text-[12px] text-[#888] hover:text-[#EDEDED] transition-colors py-2"
               >
                 Passer pour l&apos;instant
               </button>
@@ -737,9 +737,9 @@ export default function OnboardingClient({
               transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
               className="relative mb-8 mt-8"
             >
-              <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full animate-pulse" />
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 ring-1 ring-white/10 backdrop-blur-xl">
-                <Rocket className="h-12 w-12 text-emerald-400" />
+              <div className="absolute inset-0 bg-[#30d158]/20 blur-3xl rounded-full animate-pulse" />
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-[#30d158]/10">
+                <Rocket className="h-12 w-12 text-[#30d158]" />
               </div>
             </motion.div>
 
@@ -747,7 +747,7 @@ export default function OnboardingClient({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-2xl font-black text-white mb-3"
+              className="text-2xl font-semibold text-[#EDEDED] mb-3"
             >
               Tout est pret !
             </motion.h2>
@@ -756,9 +756,9 @@ export default function OnboardingClient({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="text-[14px] text-zinc-400 mb-8 max-w-sm"
+              className="text-[14px] text-[#888] mb-8 max-w-sm"
             >
-              Votre espace SAV IA est configure. Commencez a gerer vos tickets
+              Votre espace Savly est configure. Commencez a gerer vos tickets
               de support intelligemment.
             </motion.p>
 
@@ -800,10 +800,10 @@ export default function OnboardingClient({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
-              className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 mb-8 ring-1 ring-white/5"
+              className="flex items-center gap-2 rounded-xl bg-[#131316] px-4 py-3 mb-8"
             >
-              <Settings className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
-              <p className="text-[11px] text-zinc-500">
+              <Settings className="h-3.5 w-3.5 text-[#888] shrink-0" />
+              <p className="text-[11px] text-[#888]">
                 Astuce : Vous pouvez relancer l&apos;onboarding depuis les Parametres a tout moment
               </p>
             </motion.div>
@@ -816,7 +816,7 @@ export default function OnboardingClient({
               whileTap={{ scale: 0.98 }}
               onClick={handleComplete}
               disabled={loading}
-              className="flex items-center gap-2.5 rounded-2xl bg-violet-500 px-8 py-4 text-[14px] font-bold text-white shadow-lg shadow-violet-500/20 transition-colors hover:bg-violet-400 disabled:opacity-50"
+              className="flex items-center gap-2.5 rounded-2xl bg-[#E8856C] px-8 py-4 text-[14px] font-semibold text-white transition-colors hover:bg-[#E8856C]/80 disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -862,11 +862,11 @@ function StepIndicator({
                   onClick={() => isClickable && onNavigate(stepNum)}
                   disabled={!isClickable}
                   className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold transition-all duration-300',
-                    isCompleted && 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30',
-                    isActive && 'bg-violet-500 text-white shadow-lg shadow-violet-500/30',
-                    !isCompleted && !isActive && 'bg-transparent text-zinc-600 ring-1 ring-white/10',
-                    isClickable && 'cursor-pointer hover:ring-violet-500/30 hover:text-violet-400'
+                    'flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-semibold transition-all duration-300',
+                    isCompleted && 'bg-[#E8856C]/20 text-[#E8856C]',
+                    isActive && 'bg-[#E8856C] text-white',
+                    !isCompleted && !isActive && 'bg-transparent text-[#555] ring-1 ring-[white/[0.06]]',
+                    isClickable && 'cursor-pointer hover:text-[#E8856C]'
                   )}
                 >
                   {isCompleted ? (
@@ -877,7 +877,7 @@ function StepIndicator({
                 </button>
                 <span className={cn(
                   'mt-1.5 text-[10px] font-medium whitespace-nowrap',
-                  isActive ? 'text-violet-400' : isCompleted ? 'text-emerald-400/70' : 'text-zinc-600'
+                  isActive ? 'text-[#E8856C]' : isCompleted ? 'text-[#E8856C]/70' : 'text-[#555]'
                 )}>
                   {label}
                 </span>
@@ -885,12 +885,12 @@ function StepIndicator({
 
               {/* Connecting line */}
               {stepNum < 5 && (
-                <div className="flex-1 h-[2px] mx-2 mt-[-14px] rounded-full overflow-hidden bg-white/5">
+                <div className="flex-1 h-[2px] mx-2 mt-[-14px] rounded-full overflow-hidden bg-[white/[0.06]]">
                   <motion.div
                     initial={{ width: '0%' }}
                     animate={{ width: isCompleted ? '100%' : '0%' }}
                     transition={{ duration: 0.5, ease: 'easeOut' }}
-                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-500"
+                    className="h-full rounded-full bg-[#E8856C]"
                   />
                 </div>
               )}
@@ -904,21 +904,21 @@ function StepIndicator({
 
 function SummaryItem({ label, done }: { label: string; done: boolean }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 ring-1 ring-white/5">
+    <div className="flex items-center gap-3 rounded-xl bg-[#131316] px-4 py-3">
       <div className={cn(
         'flex h-6 w-6 items-center justify-center rounded-full',
-        done ? 'bg-emerald-500/20' : 'bg-zinc-500/10'
+        done ? 'bg-[#30d158]/20' : 'bg-[#48484a]/30'
       )}>
-        <CheckCircle2 className={cn('h-3.5 w-3.5', done ? 'text-emerald-400' : 'text-zinc-600')} />
+        <CheckCircle2 className={cn('h-3.5 w-3.5', done ? 'text-[#30d158]' : 'text-[#555]')} />
       </div>
-      <span className={cn('text-[13px] text-left', done ? 'text-zinc-200' : 'text-zinc-500')}>
+      <span className={cn('text-[13px] text-left', done ? 'text-[#EDEDED]' : 'text-[#888]')}>
         {label}
       </span>
     </div>
   )
 }
 
-// ── Particles Background (CSS-based) ────────────────────────────────────────
+// ── Particles Background ────────────────────────────────────────────────────
 
 function ParticlesBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -975,7 +975,7 @@ function ParticlesBackground() {
 
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(139, 92, 246, ${p.opacity})`
+        ctx.fillStyle = `rgba(10, 132, 255, ${p.opacity})`
         ctx.fill()
       }
 
@@ -1001,7 +1001,7 @@ function ParticlesBackground() {
   )
 }
 
-// ── Confetti Effect (CSS keyframes) ──────────────────────────────────────────
+// ── Confetti Effect ──────────────────────────────────────────────────────────
 
 function ConfettiEffect() {
   const [pieces, setPieces] = useState<
@@ -1017,12 +1017,12 @@ function ConfettiEffect() {
 
   useEffect(() => {
     const colors = [
-      'bg-violet-400',
-      'bg-fuchsia-400',
-      'bg-emerald-400',
-      'bg-amber-400',
-      'bg-blue-400',
-      'bg-pink-400',
+      'bg-[#E8856C]',
+      'bg-[#30d158]',
+      'bg-[#ff9f0a]',
+      'bg-[#ff453a]',
+      'bg-[#bf5af2]',
+      'bg-[#64d2ff]',
     ]
     const newPieces = Array.from({ length: 30 }, (_, i) => ({
       id: i,

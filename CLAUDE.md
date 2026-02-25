@@ -1,4 +1,4 @@
-# SaaS SAV IA
+# Savly
 
 Plateforme SaaS pour gérer le Service Après-Vente avec Intelligence Artificielle. Centralise emails, avis Google, Shopify et formulaires. Automatise les réponses avec contexte client complet et contrôle humain.
 
@@ -23,7 +23,10 @@ saas-sav-ia/
 │   │   ├── page.tsx                      # Landing page (hero, marquee, use-cases, pricing, CTA)
 │   │   ├── login/
 │   │   │   ├── page.tsx                  # Page login (Server Component)
-│   │   │   └── login-form.tsx            # Formulaire login/signup
+│   │   │   └── login-form.tsx            # Formulaire connexion uniquement + lien vers /signup
+│   │   ├── signup/
+│   │   │   ├── page.tsx                  # Page inscription (Server Component)
+│   │   │   └── signup-form.tsx           # Formulaire inscription complet (nom, email, mdp, confirmation)
 │   │   ├── dashboard/
 │   │   │   ├── layout.tsx                # Layout protégé (auth + sidebar)
 │   │   │   ├── page.tsx                  # Server component → client-page.tsx
@@ -44,7 +47,7 @@ saas-sav-ia/
 │   │   │       └── settings-client.tsx   # Profil, org, politiques SAV, intégrations
 │   │   └── api/
 │   │       ├── ai/auto-reply/route.ts          # Auto-reply IA (30s delay, re-check, admin call)
-│   │       ├── auth/callback/route.ts          # Callback OAuth Supabase
+│   │       ├── auth/callback/route.ts          # Callback OAuth Supabase (anti open-redirect + check is_onboarded → /dashboard/onboarding)
 │   │       ├── auth/gmail/route.ts             # OAuth Gmail → redirect Google
 │   │       ├── auth/gmail/callback/route.ts    # Callback Gmail → save tokens
 │   │       ├── auth/shopify/route.ts           # OAuth Shopify → redirect
@@ -60,10 +63,16 @@ saas-sav-ia/
 │   │   │   ├── ticket-list.tsx           # Liste tickets avec filtres
 │   │   │   └── ticket-detail.tsx         # Détail ticket + chat (bouton IA supprimé)
 │   │   └── landing/
-│   │       ├── hero.tsx                  # Hero section
+│   │       ├── navbar.tsx                # Navbar fixe (liens ancre #features, #use-cases, #pricing, #faq)
+│   │       ├── hero.tsx                  # Hero section (CTA → /signup)
+│   │       ├── features.tsx              # Features Bento Grid (id="features")
+│   │       ├── use-cases.tsx             # Cas d'utilisation (id="use-cases")
+│   │       ├── how-it-works.tsx          # Comment ça marche (id="how-it-works")
+│   │       ├── testimonials.tsx          # Témoignages clients
+│   │       ├── pricing.tsx               # Section pricing (id="pricing", CTAs → /signup)
+│   │       ├── faq.tsx                   # FAQ (id="faq")
+│   │       ├── footer.tsx                # Footer
 │   │       ├── marquee.tsx               # Marquee logos
-│   │       ├── use-cases.tsx             # Cas d'utilisation
-│   │       ├── pricing.tsx               # Section pricing (3 plans : Pro/Business/Enterprise)
 │   │       └── word-rotate.tsx           # Animation texte
 │   ├── lib/
 │   │   ├── ai/
@@ -93,7 +102,7 @@ saas-sav-ia/
 │   │       ├── client.ts                 # createBrowserClient
 │   │       ├── server.ts                 # createServerClient (cookies)
 │   │       ├── admin.ts                  # supabaseAdmin (Service Role Key)
-│   │       └── middleware.ts             # Client middleware
+│   │       └── middleware.ts             # Client middleware (matcher inclut /signup)
 │   └── types/
 │       └── database.types.ts             # Types Supabase (9 tables + helpers, incl. notifications)
 ├── scripts/
@@ -118,7 +127,7 @@ saas-sav-ia/
 - ✅ Setup Next.js 16 + TypeScript strict + Tailwind + ESLint
 - ✅ Clients Supabase (browser, server, admin) typés
 - ✅ Schéma BDD : 8 tables, 5 enums, RLS multi-tenant
-- ✅ Auth complète : login/signup, middleware, trigger auto-création org+profil
+- ✅ Auth complète : login + signup dédié (`/signup`), middleware, trigger auto-création org+profil
 
 ### Onboarding Wizard (5 étapes)
 - ✅ Wizard multi-étapes avec Framer Motion (`AnimatePresence` + transitions slide)
@@ -169,20 +178,42 @@ saas-sav-ia/
 - ✅ Indicateur "Live" sur le dashboard
 - ✅ Zéro dépendance charting (SVG + Tailwind + Lucide)
 
-### Landing Page
-- ✅ Hero section avec word-rotate animation
-- ✅ Marquee logos partenaires (double row, directions opposées)
-- ✅ Section use-cases avec animations
-- ✅ Section pricing (Pro 29€ / Business 79€ / Enterprise 149€) — badge "Populaire" sur Business
-- ✅ Sous-titre : "Démarrez avec 7 jours d'essai gratuit sur Pro"
-- ✅ Design premium avec gradients, glassmorphism, micro-animations
+### Landing Page (Refonte 19-20/02/2026 — "Psychologie & Conversion Ultra-Premium")
+- ✅ **Thème** : Passage au **100% Dark Mode Premium** (`bg-[#09090b]`, accents `#8b5cf6`/`#a78bfa`) pour unifier le design et maximiser le "wow effect".
+- ✅ **Glassmorphism & Aurora** : Effets visuels glow gradients (mix-blend-screen), bordures transparentes (white/10) et arrière-plans floutés.
+- ✅ **Hero** : Refonte avec mockup navigateur incrusté d'effets glassmorphism et badges statistiques flottants fluides.
+- ✅ **Features** : Bento Grid (3 cols) adapté au mode sombre avec hover states lumineux.
+- ✅ **UseCases** : Section animée Marquee + WordRotate restaurée et stylisée en mode sombre avec bg-[#0c0c10]/80.
+- ✅ **Sections Ré-intégrées** : Retour définitif des Testimonials, Pricing, FAQ et Footer de manière unifiée sur `page.tsx` en Dark Mode.
+- ✅ **Interactivité** : Animations d'entrées, déclenchements au scroll (Framer Motion) et micro-interactions avancées.
+- ✅ **Navigation ancre** : `id` ajoutés sur toutes les sections (`#features`, `#use-cases`, `#pricing`, `#faq`) + `scroll-mt-20` pour offset navbar fixe.
+- ✅ **CTAs** : Tous les boutons "Essai gratuit" / "Démarrer" pointent vers `/signup`.
 
-### Dashboard Ultra-Premium 2026
-- ✅ Sidebar "Floating Glass" avec active glow + navigation complète
+### Auth — Inscription dédiée (21/02/2026)
+- ✅ **Page `/signup`** : formulaire complet (nom, email, mot de passe, confirmation) avec validation client
+- ✅ **Design premium** : cohérent avec le thème dark (bg-[#09090b], accents emerald, animations Framer Motion)
+- ✅ **Flow adaptatif** : si confirmation email désactivée → redirect direct `/dashboard/onboarding` ; sinon → écran "Vérifiez votre boîte mail"
+- ✅ **Login simplifié** : `/login` = connexion uniquement + lien "Pas encore de compte ? Créer un compte" → `/signup`
+- ✅ **Callback auth amélioré** : sanitize `next` (anti open-redirect) + check `profiles.is_onboarded` → redirige vers `/dashboard/onboarding` pour les nouveaux utilisateurs
+- ✅ **Middleware** : `/signup` ajouté au matcher, redirection auto `/login` et `/signup` → `/dashboard` pour les users connectés
+
+### Branding — Renommage Savly (21/02/2026)
+- ✅ **SAV IA → Savly** dans toute l'app (landing, dashboard, onboarding, settings, auth, signup, invite, footer, tests e2e)
+- ✅ **Tagline navbar** : "Pilote automatique" → "SAV intelligent"
+- ✅ **URLs** : `app.sav-ia.com` → `app.savly.com`, `api.sav-ia.com` → `api.savly.com`
+- ✅ **Contact** : `contact@saas-sav.ia` → `contact@savly.com`
+- ✅ **Plans Stripe** : `SAV IA Pro/Business/Enterprise` → `Savly Pro/Business/Enterprise`
+- ✅ **Manifest + SEO metadata** : mis à jour
+- ✅ **Logo "S"** conservé tel quel (cohérent avec Savly)
+
+### Dashboard (État actuel)
+- ✅ Sidebar gauche avec navigation complète + NotificationBell
 - ✅ Inbox centralisée : liste tickets avec filtres (all/unread/mine) + recherche
-- ✅ Vue détail ticket : chat interface + métadonnées client
+- ✅ Vue détail ticket : chat interface + métadonnées client + refund sidebar
+- ✅ Analytics : graphiques SVG custom (area, bar, ring) + KPIs + heatmap
 - ✅ Loading skeletons + transition animations
 - ✅ Design dark mode avec Aurora gradients et noise texture
+- ⚠️ **Refonte Apple-style prévue** : redesign complet du dashboard (layout, sidebar, inbox, analytics, tous les composants) — voir prompt Claude Code dédié
 
 ### Supabase Integration
 - ✅ Seeder script (`/api/seed`) pour mock data
@@ -375,3 +406,84 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook  # Écouter webhook
 - **`plans.ts` est client-safe** : ne contient aucun import Stripe ni env var serveur. Les composants `'use client'` importent depuis `@/lib/plans`, pas `@/lib/stripe`.
 - App Google OAuth en mode "Test" : ajouter les emails dans Console Google → OAuth → Audience pour tester.
 - Les données Shopify sont stockées dans `customers.metadata` au format JSONB avec parsing Zod sécurisé.
+
+## Changelog landing page
+
+### 2026-02-24 — Corrections de bugs & migration Next.js 16 (Codex)
+
+**15 fichiers modifiés. `npx tsc --noEmit` ✅ · `npm run build` ✅ · warning middleware disparu ✅**
+
+- **Migration middleware → proxy** : `src/middleware.ts` supprimé, remplacé par `src/proxy.ts` avec même logique Supabase `updateSession` + même matcher. Build affiche désormais `ƒ Proxy (Middleware)`.
+- **VideoModal réelle** : `src/components/ui/video-modal.tsx` créé. Overlay sombre + `backdrop-blur`, conteneur 16:9 centré, fermeture `Escape` ou clic overlay, `AnimatePresence`, iframe YouTube placeholder, design system `#0B0B0F` + `rounded-xl`.
+- **Hardening OAuth callbacks** : ajout `try/catch`, gestion timeout provider, validation `state` robuste, gestion token invalide/expiré, redirections garanties (plus de crash silencieux) sur `gmail/callback`, `shopify/callback`, `meta/callback`.
+- **Accessibilité landing** : `role="region"` + `aria-labelledby` sur toutes les sections (`hero`, `features`, `how-it-works`, `pricing`, `use-cases`, `problems`, `testimonials`, `faq`). FAQ : `aria-expanded`, `aria-controls`, `role="region"` sur panneaux. Contraste secondaire `#555` → `#777`.
+- **SEO & sitemap** : métadonnées légales vérifiées et uniques. `src/app/sitemap.ts` mis à jour avec toutes les pages publiques (`/`, `/login`, `/signup`, `/cgu`, `/confidentialite`, `/mentions-legales`, `/cookies`). Liens footer corrigés vers vraies routes légales.
+
+### 2026-02-24 — Ajustements Layouts & Auto-Send (Google AI Studio)
+
+- **UI / Layouts** : Remplacement de certains layouts asymétriques par des grilles centrées et uniformes pour plus de clarté.
+  - `pricing.tsx` : Header centré, plan cards en grille 3 colonnes égales (`h-full`), ajout d'un toggle Mensuel/Annuel (-20%), correction du badge "Populaire" tronqué.
+  - `faq.tsx` : Header centré au-dessus de l'accordéon (`max-w-3xl`) au lieu du split left/right.
+  - `testimonials.tsx` : Refonte totale de la section "Résultats". Grille 4 colonnes proportionnelles pour les stats, et grille 3 colonnes de hauteur égale pour les avis (fini le masonry asymétrique complexe).
+  - `hero.tsx` : Réduction de l'espace texte/stats (`gap-16` → `gap-8`), centrage vertical.
+- **Copywriting Auto-Send** : Clarification du fait que l'IA envoie les messages _automatiquement_ (sans clic manuel).
+  - Remplacement des boutons "Modifier / Envoyer" dans le mockup Hero par un badge dynamique "Savly IA — Envoyé automatiquement".
+  - Mise à jour du wording dans `features.tsx` et `how-it-works.tsx` (étape 3).
+- **Background** : Ajout de 4 nouvelles sphères (10 au total) dans `floating-spheres.tsx` avec des animations et délais variés pour plus de dynamisme.
+
+### 2026-02-24 — Redesign complet "Taste-Skill" (Claude Code)
+
+**Refonte intégrale de la landing page** par Claude Code avec le style "Taste-Skill". 13 fichiers modifiés, build OK.
+
+**Palette (THE LILA BAN)** :
+- Violet `#8b5cf6` → coral chaud `#E8856C` partout
+- Background : `#0B0B0F` (off-black), surfaces `#131316`, hover `#1A1A1F`
+- Textes : `#EDEDED` (primaire), `#888` (secondaire), `#555` (tertiaire)
+
+**Layouts asymétriques** :
+- `hero.tsx` — Split-screen (texte gauche + stats flottantes droite)
+- `features.tsx` — Bento grid zig-zag `2fr/1fr` puis `1fr/2fr` avec `SpotlightCard`
+- `how-it-works.tsx` — Header sticky gauche + étapes empilées droite
+- `pricing.tsx` — Header sticky gauche + plans empilés verticalement droite
+- `faq.tsx` — Split layout (header sticky gauche + accordion droite)
+- `testimonials.tsx` — Stats 2x2 + asymétrie `1.4fr/1fr`
+- `problems.tsx` — Grille 2x2
+
+**Nouveaux composants** :
+- `floating-spheres.tsx` — 6 sphères en verre 3D flottantes (radial-gradient + inset shadows)
+- `magnetic.tsx` — Boutons magnétiques (`useMotionValue` + `useSpring`) + `SpotlightCard` (glow radial suit le curseur)
+
+**Animations** :
+- Spring physics : `type: "spring", stiffness: 100, damping: 20`
+- `staggerChildren` avec variants orchestrées
+- `active:scale-[0.97]` sur tous les éléments interactifs
+- Navbar Dynamic Island : pill qui apparaît au scroll
+
+**Branding** : "SAV IA" → "Savly", CTAs → `/signup`
+
+**Fichiers modifiés** : `globals.css`, `page.tsx`, `navbar.tsx`, `hero.tsx`, `problems.tsx`, `features.tsx`, `use-cases.tsx`, `how-it-works.tsx`, `testimonials.tsx`, `pricing.tsx`, `faq.tsx`, `footer.tsx`, `floating-spheres.tsx`, `magnetic.tsx`
+
+### 2026-02-23 — Rollback puis re-redesign
+
+- Rollback initial de tous les composants landing au commit `6b20168` via `git checkout HEAD`
+- Puis redesign complet ci-dessus par Claude Code
+
+**⚠️ Bug Turbopack (non résolu)** : le cache SST Turbopack se corrompt en boucle sur cette machine macOS. `npm run dev` crashe systématiquement avec `Failed to restore task data (corrupted database or bug)`.
+- **Workaround** : utiliser `npm run build && npm start` au lieu de `npm run dev`
+- En mode `npm start`, pas de hot-reload — il faut rebuild après chaque modif
+- À investiguer : possible bug Next.js 16.1.6 + Turbopack sur macOS
+
+### Prompts disponibles (à utiliser avec Claude Code ou Codex)
+
+| Fichier | Contenu |
+|---------|---------|
+| `PROMPT-CLAUDE-CODE-LANDING-V4.md` | **⭐ PROMPT ULTIME** — Redesign complet, synthèse de V2+V3+fixes, palette indigo, scénarios légaux |
+| `PROMPT-CLAUDE-CODE-LANDING-V3.md` | Redesign complet de la landing (V3, palette indigo) |
+| `PROMPT-CLAUDE-CODE-LANDING-V2.md` | Redesign V2 (Dynamic Island, Bento Grid, masonry) |
+| `PROMPT-CLAUDE-CODE-LANDING-REDESIGN.md` | Premier prompt de redesign (V1) |
+| `PROMPT-CLAUDE-CODE-QUICK-FIXES.md` | 4 corrections ciblées (titre hero, centrage, marquee, bulles features) |
+| `PROMPT-CLAUDE-CODE-FIX-LAYOUT.md` | Fix alignement Features + Comment ça marche |
+| `PROMPT-CLAUDE-CODE-LANDING-SKILL.md` | Refonte avec le skill "UI UX pro max" |
+| `PROMPT-CODEX-FIX-TESTIMONIALS.md` | Remplacement légal des faux avis clients par des scénarios illustratifs |
+| `PROMPT-CODEX-LEGAL-PAGES.md` | Génération des pages légales (CGU, Confidentialité, Mentions légales, Cookies) |
+| `PROMPT-CLAUDE-CODE-FIX-DEV-SERVER.md` | Fix crash Turbopack (cache SST corrompu) |

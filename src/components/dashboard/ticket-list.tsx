@@ -26,13 +26,13 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-const avatarGradients = [
-  'bg-violet-500/15 text-violet-400',
-  'bg-blue-500/15 text-blue-400',
-  'bg-emerald-500/15 text-emerald-400',
-  'bg-amber-500/15 text-amber-400',
-  'bg-rose-500/15 text-rose-400',
-  'bg-cyan-500/15 text-cyan-400',
+const avatarColors = [
+  'bg-[#0a84ff]/15 text-[#0a84ff]',
+  'bg-[#30d158]/15 text-[#30d158]',
+  'bg-[#ff9f0a]/15 text-[#ff9f0a]',
+  'bg-[#ff453a]/15 text-[#ff453a]',
+  'bg-[#bf5af2]/15 text-[#bf5af2]',
+  'bg-[#64d2ff]/15 text-[#64d2ff]',
 ]
 
 function getAvatarColor(name: string): string {
@@ -40,7 +40,7 @@ function getAvatarColor(name: string): string {
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  return avatarGradients[Math.abs(hash) % avatarGradients.length] ?? avatarGradients[0] as string
+  return avatarColors[Math.abs(hash) % avatarColors.length] ?? avatarColors[0] as string
 }
 
 const channelIcons: Record<MockTicket['channel'], typeof Mail> = {
@@ -53,10 +53,10 @@ const channelIcons: Record<MockTicket['channel'], typeof Mail> = {
 }
 
 const priorityConfig: Record<MockTicket['priority'], { style: string; icon?: React.ComponentType<{ className?: string }> }> = {
-  urgent: { style: 'bg-red-500/10 text-red-400 ring-1 ring-red-500/20', icon: ArrowUp },
-  high: { style: 'bg-orange-500/10 text-orange-400 ring-1 ring-orange-500/20', icon: ArrowUp },
-  medium: { style: 'bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20' },
-  low: { style: 'bg-zinc-500/10 text-zinc-500 ring-1 ring-zinc-500/20', icon: ArrowDown },
+  urgent: { style: 'bg-[#ff453a]/10 text-[#ff453a]', icon: ArrowUp },
+  high: { style: 'bg-[#ff9f0a]/10 text-[#ff9f0a]', icon: ArrowUp },
+  medium: { style: 'bg-[#ffd60a]/10 text-[#ffd60a]' },
+  low: { style: 'bg-white/[0.04] text-[#888]', icon: ArrowDown },
 }
 
 // ── Filters ─────────────────────────────────────────────────────────────────
@@ -89,18 +89,18 @@ export function TicketList({
   onSearchChange: (q: string) => void
 }) {
   return (
-    <div className="flex h-full w-[380px] shrink-0 flex-col border-r border-white/[0.06]">
+    <div className="flex h-full w-[380px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0B0B0F]">
       {/* Header */}
-      <div className="shrink-0 px-5 pt-6 pb-4">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-white tracking-tight">
+      <div className="shrink-0 px-5 pt-5 pb-4">
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-[20px] font-semibold text-[#EDEDED] tracking-tight">
             Inbox
           </h1>
           <div className="flex items-center gap-2">
-            <button className="p-2 rounded-lg hover:bg-white/[0.04] text-zinc-600 hover:text-zinc-400 transition-all duration-200">
+            <button className="p-2 rounded-lg hover:bg-white/[0.06] text-[#888] hover:text-[#EDEDED] transition-colors duration-150">
               <Filter className="h-4 w-4" />
             </button>
-            <span className="flex h-6 min-w-6 items-center justify-center rounded-md bg-white/[0.04] px-2 font-mono text-[11px] font-bold text-zinc-500 border border-white/[0.06]">
+            <span className="flex h-6 min-w-6 items-center justify-center rounded-md bg-white/[0.06] px-2 text-[11px] font-medium text-[#888]">
               {tickets.length}
             </span>
           </div>
@@ -108,27 +108,27 @@ export function TicketList({
 
         {/* Search */}
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 transition-colors" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
           <input
             type="text"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Rechercher..."
-            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.02] py-2.5 pl-10 pr-4 font-mono text-[13px] text-zinc-200 outline-none placeholder:text-zinc-700 focus:border-[#8b5cf6]/30 focus:bg-white/[0.04] transition-all duration-200"
+            className="w-full rounded-lg bg-[#131316] border border-white/[0.06] py-2 pl-10 pr-4 text-[13px] text-[#EDEDED] outline-none placeholder:text-[#555] focus:ring-1 focus:ring-[#E8856C]/50 transition-all duration-150"
           />
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex gap-0.5 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+        {/* Segmented Control */}
+        <div className="flex rounded-lg bg-[#131316] p-0.5 border border-white/[0.06]">
           {filters.map((f) => (
             <button
               key={f.value}
               onClick={() => onFilterChange(f.value)}
               className={cn(
-                "flex-1 rounded-md py-1.5 font-mono text-[11px] font-medium transition-all duration-200",
+                "flex-1 rounded-md py-1.5 text-[12px] font-medium transition-all duration-150",
                 filter === f.value
-                  ? "bg-white/[0.08] text-white"
-                  : "text-zinc-600 hover:text-zinc-400"
+                  ? "bg-white/[0.06] text-[#EDEDED] shadow-sm"
+                  : "text-[#888] hover:text-[#EDEDED]"
               )}
             >
               {f.label}
@@ -138,14 +138,14 @@ export function TicketList({
       </div>
 
       {/* Ticket list */}
-      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-1">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-0.5">
         {tickets.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] mb-4">
-              <Inbox className="h-6 w-6 text-zinc-600" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#131316] border border-white/[0.06] mb-4">
+              <Inbox className="h-6 w-6 text-[#555]" />
             </div>
-            <p className="text-[13px] font-medium text-zinc-400">Tout est calme</p>
-            <p className="font-mono text-[11px] text-zinc-600 mt-1">Aucun ticket à traiter.</p>
+            <p className="text-[14px] font-medium text-[#888]">Tout est calme</p>
+            <p className="text-[12px] text-[#555] mt-1">Aucun ticket à traiter.</p>
           </div>
         ) : (
           tickets.map((ticket) => {
@@ -159,33 +159,28 @@ export function TicketList({
                 key={ticket.id}
                 onClick={() => onSelect(ticket.id)}
                 className={cn(
-                  "group relative w-full rounded-lg p-3.5 text-left transition-all duration-200 border",
+                  "group w-full rounded-xl p-3.5 text-left transition-colors duration-150",
                   isSelected
-                    ? "bg-white/[0.06] border-white/[0.1]"
-                    : "bg-transparent border-transparent hover:bg-white/[0.03] hover:border-white/[0.06]"
+                    ? "bg-[#131316] border border-white/[0.06]"
+                    : "border border-transparent hover:bg-white/[0.04]"
                 )}
               >
-                {/* Active indicator */}
-                {isSelected && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-0.5 rounded-full bg-[#8b5cf6] shadow-[0_0_6px_rgba(139,92,246,0.5)]" />
-                )}
-
                 <div className="flex gap-3">
                   {/* Avatar */}
                   <div className="relative shrink-0">
                     <div
                       className={cn(
-                        "flex h-9 w-9 items-center justify-center rounded-lg font-mono text-[11px] font-bold transition-all duration-200",
+                        "flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-semibold",
                         getAvatarColor(ticket.customer.name)
                       )}
                     >
                       {getInitials(ticket.customer.name)}
                     </div>
                     {ticket.unread && (
-                      <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#8b5cf6] ring-2 ring-[#0c0c10]" />
+                      <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#E8856C] ring-2 ring-[#0B0B0F]" />
                     )}
-                    <div className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded bg-[#0c0c10] ring-1 ring-white/[0.06]">
-                      <ChannelIcon className="h-2 w-2 text-zinc-500" />
+                    <div className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#0B0B0F] ring-1 ring-white/[0.08]">
+                      <ChannelIcon className="h-2 w-2 text-[#888]" />
                     </div>
                   </div>
 
@@ -196,13 +191,13 @@ export function TicketList({
                         className={cn(
                           "truncate text-[13px]",
                           ticket.unread || isSelected
-                            ? "font-semibold text-white"
-                            : "font-medium text-zinc-400"
+                            ? "font-semibold text-[#EDEDED]"
+                            : "font-medium text-[#888]"
                         )}
                       >
                         {ticket.customer.name}
                       </span>
-                      <span className="shrink-0 font-mono text-[10px] text-zinc-600">
+                      <span className="shrink-0 text-[11px] text-[#555]">
                         {timeAgo(lastMsg?.createdAt ?? ticket.createdAt)}
                       </span>
                     </div>
@@ -210,13 +205,13 @@ export function TicketList({
                     <p
                       className={cn(
                         "truncate text-[12px] mb-1",
-                        ticket.unread ? "font-medium text-zinc-300" : "text-zinc-500"
+                        ticket.unread ? "font-medium text-[#EDEDED]" : "text-[#888]"
                       )}
                     >
                       {ticket.subject}
                     </p>
 
-                    <p className="truncate font-mono text-[11px] text-zinc-700">
+                    <p className="truncate text-[11px] text-[#555]">
                       {lastMsg?.body.replace(/\n/g, ' ').slice(0, 55)}...
                     </p>
 
@@ -224,7 +219,7 @@ export function TicketList({
                     <div className="mt-2 flex items-center gap-1.5">
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider",
+                          "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider",
                           priorityConfig[ticket.priority].style
                         )}
                       >
@@ -235,7 +230,7 @@ export function TicketList({
                       {ticket.tags.slice(0, 2).map((tag) => (
                         <span
                           key={tag}
-                          className="rounded-md bg-white/[0.04] px-1.5 py-0.5 font-mono text-[9px] text-zinc-600 border border-white/[0.06]"
+                          className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-[#555]"
                         >
                           {tag}
                         </span>

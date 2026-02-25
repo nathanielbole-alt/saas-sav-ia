@@ -112,7 +112,7 @@ export default function InviteClient({ data }: { data: InviteData }) {
                 Vous etes invite !
               </h1>
               <p className="text-[14px] text-zinc-400">
-                Vous avez ete invite a rejoindre une organisation sur SAV IA.
+                Vous avez ete invite a rejoindre une organisation sur Savly.
               </p>
             </div>
 

@@ -1,6 +1,6 @@
 {
-    "name": "SAV IA",
-    "short_name": "SAV IA",
+    "name": "Savly",
+    "short_name": "Savly",
     "description": "Votre SAV, boosté par l'IA",
     "start_url": "/dashboard",
     "display": "standalone",

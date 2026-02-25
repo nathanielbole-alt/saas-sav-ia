@@ -50,17 +50,17 @@ const channelLabels: Record<MockTicket['channel'], { label: string; icon: typeof
 }
 
 const statusConfig: Record<MockTicket['status'], { label: string; className: string }> = {
-  open: { label: 'Ouvert', className: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20' },
-  pending: { label: 'En attente', className: 'bg-amber-500/10 text-amber-400 ring-amber-500/20' },
-  resolved: { label: 'Résolu', className: 'bg-blue-500/10 text-blue-400 ring-blue-500/20' },
-  closed: { label: 'Fermé', className: 'bg-zinc-500/10 text-zinc-400 ring-zinc-500/20' },
+  open: { label: 'Ouvert', className: 'bg-[#30d158]/10 text-[#30d158]' },
+  pending: { label: 'En attente', className: 'bg-[#ffd60a]/10 text-[#ffd60a]' },
+  resolved: { label: 'Résolu', className: 'bg-[#0a84ff]/10 text-[#0a84ff]' },
+  closed: { label: 'Fermé', className: 'bg-[rgba(255,255,255,0.04)] text-[#86868b]' },
 }
 
 const priorityConfig: Record<MockTicket['priority'], { label: string; className: string; order: number }> = {
-  urgent: { label: 'Urgent', className: 'text-red-400', order: 0 },
-  high: { label: 'Haute', className: 'text-orange-400', order: 1 },
-  medium: { label: 'Moyenne', className: 'text-amber-400', order: 2 },
-  low: { label: 'Basse', className: 'text-zinc-400', order: 3 },
+  urgent: { label: 'Urgent', className: 'text-[#ff453a]', order: 0 },
+  high: { label: 'Haute', className: 'text-[#ff9f0a]', order: 1 },
+  medium: { label: 'Moyenne', className: 'text-[#ffd60a]', order: 2 },
+  low: { label: 'Basse', className: 'text-[#86868b]', order: 3 },
 }
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -87,12 +87,9 @@ export default function TicketsClient({
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all')
   const [showFilters, setShowFilters] = useState(false)
 
-  // ── Filtering & Sorting ─────────────────────────────────────────────────
-
   const filteredAndSorted = useMemo(() => {
     let result = [...initialTickets]
 
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter(
@@ -104,7 +101,6 @@ export default function TicketsClient({
       )
     }
 
-    // Filters
     if (statusFilter !== 'all') {
       result = result.filter((t) => t.status === statusFilter)
     }
@@ -115,7 +111,6 @@ export default function TicketsClient({
       result = result.filter((t) => t.channel === channelFilter)
     }
 
-    // Sort
     result.sort((a, b) => {
       let cmp = 0
       switch (sortField) {
@@ -141,8 +136,6 @@ export default function TicketsClient({
     return result
   }, [initialTickets, search, sortField, sortDir, statusFilter, priorityFilter, channelFilter])
 
-  // ── Sort handler ────────────────────────────────────────────────────────
-
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -156,19 +149,15 @@ export default function TicketsClient({
     if (sortField !== field)
       return <ArrowUpDown className="h-3 w-3 opacity-30" />
     return sortDir === 'asc' ? (
-      <ArrowUp className="h-3 w-3 text-violet-400" />
+      <ArrowUp className="h-3 w-3 text-[#0a84ff]" />
     ) : (
-      <ArrowDown className="h-3 w-3 text-violet-400" />
+      <ArrowDown className="h-3 w-3 text-[#0a84ff]" />
     )
   }
-
-  // ── Active filters count ────────────────────────────────────────────────
 
   const activeFilters = [statusFilter, priorityFilter, channelFilter].filter(
     (f) => f !== 'all'
   ).length
-
-  // ── Stats ───────────────────────────────────────────────────────────────
 
   const stats = useMemo(() => {
     const total = initialTickets.length
@@ -178,16 +167,14 @@ export default function TicketsClient({
     return { total, open, pending, resolved }
   }, [initialTickets])
 
-  // ── Render ──────────────────────────────────────────────────────────────
-
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden bg-[#0a0a0a]">
       {/* Header */}
-      <div className="flex-none border-b border-white/5 p-6">
+      <div className="flex-none border-b border-[rgba(255,255,255,0.08)] p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-xl font-bold text-white">Tickets</h1>
-            <p className="text-[13px] text-zinc-500 mt-0.5">
+            <h1 className="text-[20px] font-semibold text-[#f5f5f7]">Tickets</h1>
+            <p className="text-[13px] text-[#86868b] mt-0.5">
               Gérez et suivez tous les tickets de support
             </p>
           </div>
@@ -195,17 +182,17 @@ export default function TicketsClient({
           {/* Quick stats */}
           <div className="flex items-center gap-3">
             {([
-              { label: 'Total', value: stats.total, color: 'text-zinc-300' },
-              { label: 'Ouverts', value: stats.open, color: 'text-emerald-400' },
-              { label: 'En attente', value: stats.pending, color: 'text-amber-400' },
-              { label: 'Résolus', value: stats.resolved, color: 'text-blue-400' },
+              { label: 'Total', value: stats.total, color: 'text-[#f5f5f7]' },
+              { label: 'Ouverts', value: stats.open, color: 'text-[#30d158]' },
+              { label: 'En attente', value: stats.pending, color: 'text-[#ffd60a]' },
+              { label: 'Résolus', value: stats.resolved, color: 'text-[#0a84ff]' },
             ] as const).map((s) => (
               <div
                 key={s.label}
-                className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-3 py-1.5 ring-1 ring-white/5"
+                className="flex items-center gap-1.5 rounded-lg bg-[#1c1c1e] px-3 py-1.5"
               >
-                <span className={cn('text-sm font-semibold', s.color)}>{s.value}</span>
-                <span className="text-[11px] text-zinc-500">{s.label}</span>
+                <span className={cn('text-sm font-semibold tabular-nums', s.color)}>{s.value}</span>
+                <span className="text-[11px] text-[#86868b]">{s.label}</span>
               </div>
             ))}
           </div>
@@ -214,28 +201,28 @@ export default function TicketsClient({
         {/* Search + Filter toggle */}
         <div className="flex items-center gap-3">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#48484a]" />
             <input
               type="text"
               placeholder="Rechercher un ticket..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-zinc-200 placeholder-zinc-600 ring-1 ring-white/5 transition-all focus:outline-none focus:ring-violet-500/30"
+              className="w-full rounded-lg bg-[#2c2c2e] py-2.5 pl-10 pr-4 text-[13px] text-[#f5f5f7] placeholder-[#48484a] transition-all focus:outline-none focus:ring-1 focus:ring-[#0a84ff]/50"
             />
           </div>
           <button
             onClick={() => setShowFilters((v) => !v)}
             className={cn(
-              'flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm ring-1 ring-white/5 transition-all',
+              'flex items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] transition-colors duration-150',
               showFilters || activeFilters > 0
-                ? 'bg-violet-500/10 text-violet-300 ring-violet-500/20'
-                : 'bg-white/[0.04] text-zinc-400 hover:text-zinc-200'
+                ? 'bg-[#0a84ff]/10 text-[#0a84ff]'
+                : 'bg-[#1c1c1e] text-[#86868b] hover:text-[#f5f5f7]'
             )}
           >
             <Filter className="h-4 w-4" />
             Filtres
             {activeFilters > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-violet-500 text-[10px] font-bold text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0a84ff] text-[10px] font-medium text-white">
                 {activeFilters}
               </span>
             )}
@@ -245,12 +232,11 @@ export default function TicketsClient({
         {/* Filter dropdowns */}
         {showFilters && (
           <div className="mt-4 flex items-center gap-3 animate-in slide-in-from-top-1 duration-200">
-            {/* Status */}
             <div className="relative">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="appearance-none rounded-lg bg-white/[0.04] px-3 py-2 pr-8 text-sm text-zinc-300 ring-1 ring-white/5 focus:outline-none focus:ring-violet-500/30"
+                className="appearance-none rounded-lg bg-[#2c2c2e] px-3 py-2 pr-8 text-[13px] text-[#f5f5f7] focus:outline-none focus:ring-1 focus:ring-[#0a84ff]/50"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="open">Ouvert</option>
@@ -258,15 +244,14 @@ export default function TicketsClient({
                 <option value="resolved">Résolu</option>
                 <option value="closed">Fermé</option>
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#86868b]" />
             </div>
 
-            {/* Priority */}
             <div className="relative">
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value as PriorityFilter)}
-                className="appearance-none rounded-lg bg-white/[0.04] px-3 py-2 pr-8 text-sm text-zinc-300 ring-1 ring-white/5 focus:outline-none focus:ring-violet-500/30"
+                className="appearance-none rounded-lg bg-[#2c2c2e] px-3 py-2 pr-8 text-[13px] text-[#f5f5f7] focus:outline-none focus:ring-1 focus:ring-[#0a84ff]/50"
               >
                 <option value="all">Toutes les priorités</option>
                 <option value="urgent">Urgent</option>
@@ -274,15 +259,14 @@ export default function TicketsClient({
                 <option value="medium">Moyenne</option>
                 <option value="low">Basse</option>
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#86868b]" />
             </div>
 
-            {/* Channel */}
             <div className="relative">
               <select
                 value={channelFilter}
                 onChange={(e) => setChannelFilter(e.target.value as ChannelFilter)}
-                className="appearance-none rounded-lg bg-white/[0.04] px-3 py-2 pr-8 text-sm text-zinc-300 ring-1 ring-white/5 focus:outline-none focus:ring-violet-500/30"
+                className="appearance-none rounded-lg bg-[#2c2c2e] px-3 py-2 pr-8 text-[13px] text-[#f5f5f7] focus:outline-none focus:ring-1 focus:ring-[#0a84ff]/50"
               >
                 <option value="all">Tous les canaux</option>
                 <option value="email">Email</option>
@@ -290,7 +274,7 @@ export default function TicketsClient({
                 <option value="google_review">Avis Google</option>
                 <option value="manual">Manuel</option>
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#86868b]" />
             </div>
 
             {activeFilters > 0 && (
@@ -300,7 +284,7 @@ export default function TicketsClient({
                   setPriorityFilter('all')
                   setChannelFilter('all')
                 }}
-                className="text-xs text-zinc-500 hover:text-violet-400 transition-colors"
+                className="text-[12px] text-[#86868b] hover:text-[#0a84ff] transition-colors"
               >
                 Réinitialiser
               </button>
@@ -313,7 +297,7 @@ export default function TicketsClient({
       <div className="flex-1 overflow-auto">
         <table className="w-full">
           <thead className="sticky top-0 z-10">
-            <tr className="border-b border-white/5 bg-white/[0.02] backdrop-blur-sm">
+            <tr className="border-b border-[rgba(255,255,255,0.08)] bg-[#1c1c1e]">
               {([
                 { field: 'subject' as SortField, label: 'Sujet', width: 'w-[30%]' },
                 { field: 'customer' as SortField, label: 'Client', width: 'w-[18%]' },
@@ -323,40 +307,40 @@ export default function TicketsClient({
                 <th
                   key={col.field}
                   className={cn(
-                    'px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-500',
+                    'px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-[#86868b]',
                     col.width
                   )}
                 >
                   <button
                     onClick={() => handleSort(col.field)}
-                    className="flex items-center gap-1.5 hover:text-zinc-300 transition-colors"
+                    className="flex items-center gap-1.5 hover:text-[#f5f5f7] transition-colors"
                   >
                     {col.label}
                     <SortIcon field={col.field} />
                   </button>
                 </th>
               ))}
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-500 w-[12%]">
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-[#86868b] w-[12%]">
                 Canal
               </th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-500 w-[10%]">
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-[#86868b] w-[10%]">
                 <button
                   onClick={() => handleSort('createdAt')}
-                  className="flex items-center gap-1.5 hover:text-zinc-300 transition-colors"
+                  className="flex items-center gap-1.5 hover:text-[#f5f5f7] transition-colors"
                 >
                   Date
                   <SortIcon field="createdAt" />
                 </button>
               </th>
-              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-500 w-[8%]">
+              <th className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-wider text-[#86868b] w-[8%]">
                 Msgs
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/[0.03]">
+          <tbody className="divide-y divide-[rgba(255,255,255,0.04)]">
             {filteredAndSorted.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-16 text-center text-sm text-zinc-500">
+                <td colSpan={7} className="py-16 text-center text-[13px] text-[#86868b]">
                   Aucun ticket trouvé
                 </td>
               </tr>
@@ -369,23 +353,22 @@ export default function TicketsClient({
                   key={ticket.id}
                   onClick={() => router.push(`/dashboard?ticket=${ticket.id}`)}
                   className={cn(
-                    'group cursor-pointer transition-colors hover:bg-white/[0.03]',
-                    ticket.unread && 'bg-violet-500/[0.02]'
+                    'group cursor-pointer transition-colors hover:bg-[rgba(255,255,255,0.04)]',
+                    ticket.unread && 'bg-[#0a84ff]/[0.02]'
                   )}
                 >
-                  {/* Subject */}
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2.5">
                       {ticket.unread && (
-                        <span className="flex-none h-2 w-2 rounded-full bg-violet-500" />
+                        <span className="flex-none h-2 w-2 rounded-full bg-[#0a84ff]" />
                       )}
                       <div className="min-w-0">
                         <p
                           className={cn(
-                            'truncate text-sm',
+                            'truncate text-[13px]',
                             ticket.unread
-                              ? 'font-semibold text-white'
-                              : 'font-medium text-zinc-300'
+                              ? 'font-semibold text-[#f5f5f7]'
+                              : 'font-medium text-[#f5f5f7]'
                           )}
                         >
                           {ticket.subject}
@@ -395,7 +378,7 @@ export default function TicketsClient({
                             {ticket.tags.slice(0, 3).map((tag) => (
                               <span
                                 key={tag}
-                                className="inline-block rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-zinc-500"
+                                className="inline-block rounded-md bg-[rgba(255,255,255,0.04)] px-1.5 py-0.5 text-[10px] text-[#48484a]"
                               >
                                 {tag}
                               </span>
@@ -406,17 +389,15 @@ export default function TicketsClient({
                     </div>
                   </td>
 
-                  {/* Customer */}
                   <td className="px-4 py-3.5">
-                    <p className="truncate text-sm text-zinc-300">{ticket.customer.name}</p>
-                    <p className="truncate text-[11px] text-zinc-600">{ticket.customer.email}</p>
+                    <p className="truncate text-[13px] text-[#f5f5f7]">{ticket.customer.name}</p>
+                    <p className="truncate text-[11px] text-[#48484a]">{ticket.customer.email}</p>
                   </td>
 
-                  {/* Status */}
                   <td className="px-4 py-3.5">
                     <span
                       className={cn(
-                        'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1',
+                        'inline-flex items-center rounded-md px-2.5 py-0.5 text-[11px] font-medium',
                         statusConfig[ticket.status].className
                       )}
                     >
@@ -424,7 +405,6 @@ export default function TicketsClient({
                     </span>
                   </td>
 
-                  {/* Priority */}
                   <td className="px-4 py-3.5">
                     <span
                       className={cn(
@@ -436,26 +416,23 @@ export default function TicketsClient({
                     </span>
                   </td>
 
-                  {/* Channel */}
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1.5">
-                      <ChannelIcon className="h-3.5 w-3.5 text-zinc-500" />
-                      <span className="text-[12px] text-zinc-400">
+                      <ChannelIcon className="h-3.5 w-3.5 text-[#86868b]" />
+                      <span className="text-[12px] text-[#86868b]">
                         {channelLabels[ticket.channel].label}
                       </span>
                     </div>
                   </td>
 
-                  {/* Date */}
                   <td className="px-4 py-3.5">
-                    <span className="text-[12px] text-zinc-500" title={formatDate(ticket.createdAt)}>
+                    <span className="text-[12px] text-[#86868b]" title={formatDate(ticket.createdAt)}>
                       {timeAgo(ticket.createdAt)}
                     </span>
                   </td>
 
-                  {/* Messages count */}
                   <td className="px-4 py-3.5">
-                    <span className="text-[12px] text-zinc-500">
+                    <span className="text-[12px] text-[#86868b] tabular-nums">
                       {ticket.messages.length}
                     </span>
                   </td>
@@ -467,8 +444,8 @@ export default function TicketsClient({
       </div>
 
       {/* Footer */}
-      <div className="flex-none border-t border-white/5 px-6 py-3 flex items-center justify-between">
-        <p className="text-[12px] text-zinc-500">
+      <div className="flex-none border-t border-[rgba(255,255,255,0.08)] px-6 py-3 flex items-center justify-between">
+        <p className="text-[12px] text-[#86868b]">
           {filteredAndSorted.length} ticket{filteredAndSorted.length !== 1 ? 's' : ''}{' '}
           {activeFilters > 0 && `(${initialTickets.length} au total)`}
         </p>

@@ -1,0 +1,15 @@
+{
+  "completed_at": 1771467907,
+  "created_at": 1771467760,
+  "error": null,
+  "expires_at": 1771471507,
+  "id": "video_699673f073e0819192b5e36dd45876ed0de41faa8b7845ab",
+  "model": "sora-2",
+  "object": "video",
+  "progress": 100,
+  "prompt": "Use case: landing page hero for a customer support SaaS\nPrimary request: clean 2D motion-design style walkthrough of a real support workflow dashboard, easy to understand at first glance\nScene/background: modern SaaS interface on desktop browser, dark premium UI, no futuristic holograms\nSubject: unified inbox with tickets, customer profile panel, AI response suggestion panel, and status timeline\nAction: sequential product story with concrete steps\nCamera: mostly static screen composition with gentle zoom and smooth pan transitions, no cinematic sci-fi effects\nLighting/mood: calm, professional, reassuring, productivity-oriented\nColor palette: charcoal background, soft zinc grays, violet highlights, subtle warm accents\nStyle/format: practical SaaS product demo, clear UI hierarchy, simple micro-animations, realistic dashboard visuals\nTiming/beats: 0-3s incoming messages from email, Instagram, Google review merge into one inbox; 3-6s AI proposes a response with key customer context (orders, history); 6-9s agent reviews and clicks send; 9-12s ticket becomes resolved and satisfaction indicator rises\nAudio: none\nText (verbatim): \"Inbox unifi\u00e9e\" \"Suggestion IA\" \"Validation agent\" \"Ticket r\u00e9solu\"\nConstraints: no real people, no faces, no logos of real brands, readable large labels only, no tiny text blocks\nAvoid: futuristic HUD, neon cyberpunk look, chaotic effects, abstract particles, glitch transitions",
+  "remixed_from_video_id": null,
+  "seconds": "12",
+  "size": "1280x720",
+  "status": "completed"
+}

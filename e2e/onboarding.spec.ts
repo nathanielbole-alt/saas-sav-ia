@@ -26,7 +26,7 @@ test.describe('Onboarding Flow', () => {
     // If redirected to onboarding, check Step 1 content
     if (page.url().includes('/onboarding')) {
       await expect(
-        page.locator('text=Bienvenue sur SAV IA')
+        page.locator('text=Bienvenue sur Savly')
       ).toBeVisible({ timeout: 10_000 })
       await expect(
         page.locator('button:has-text("Commencer")')

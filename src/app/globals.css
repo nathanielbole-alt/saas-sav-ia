@@ -1,85 +1,121 @@
 @import "tailwindcss";
 
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
+  --background: #0B0B0F;
+  --foreground: #EDEDED;
+  --accent: #E8856C;
+  --accent-hover: #F09E8A;
+  --surface: #131316;
+  --surface-hover: #1A1A1F;
+  --border: rgba(255, 255, 255, 0.06);
+  --text-secondary: #888888;
+  --text-tertiary: #555555;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-space-grotesk), var(--font-dm-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --animate-marquee: marquee var(--duration) linear infinite;
   --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
-  --animate-aurora-1: aurora-1 25s ease-in-out infinite;
-  --animate-aurora-2: aurora-2 30s ease-in-out infinite;
+  --animate-float-1: float-1 8s ease-in-out infinite;
+  --animate-float-2: float-2 10s ease-in-out infinite;
+  --animate-float-3: float-3 12s ease-in-out infinite;
+  --animate-float-4: float-4 9s ease-in-out infinite;
+  --animate-pulse-soft: pulse-soft 4s ease-in-out infinite;
+  --animate-sphere-rotate: sphere-rotate 20s linear infinite;
 }
 
+/* Marquee */
 @keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-100% - var(--gap)));
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap))); }
 }
 
 @keyframes marquee-vertical {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(calc(-100% - var(--gap)));
-  }
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-100% - var(--gap))); }
 }
 
-@keyframes aurora-1 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 1;
-  }
-  25% {
-    transform: translate(5%, -8%) scale(1.08);
-    opacity: 0.8;
-  }
-  50% {
-    transform: translate(-3%, 5%) scale(0.95);
-    opacity: 1;
-  }
-  75% {
-    transform: translate(8%, 3%) scale(1.05);
-    opacity: 0.85;
-  }
+/* 3D Floating Sphere Keyframes */
+@keyframes float-1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-30px) rotate(2deg); }
+  50% { transform: translateY(-10px) rotate(-1deg); }
+  75% { transform: translateY(-25px) rotate(1deg); }
 }
 
-@keyframes aurora-2 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 1;
-  }
-  25% {
-    transform: translate(-8%, 5%) scale(1.05);
-    opacity: 0.85;
-  }
-  50% {
-    transform: translate(5%, -3%) scale(1.1);
-    opacity: 1;
-  }
-  75% {
-    transform: translate(-3%, -8%) scale(0.95);
-    opacity: 0.9;
-  }
+@keyframes float-2 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33% { transform: translateY(-20px) rotate(-2deg); }
+  66% { transform: translateY(-35px) rotate(1.5deg); }
+}
+
+@keyframes float-3 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-15px) translateX(10px); }
+  50% { transform: translateY(-28px) translateX(-5px); }
+  75% { transform: translateY(-8px) translateX(8px); }
+}
+
+@keyframes float-4 {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-22px) scale(1.03); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes sphere-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Grain noise texture overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Focus ring for accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

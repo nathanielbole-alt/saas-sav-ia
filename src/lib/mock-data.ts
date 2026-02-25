@@ -141,7 +141,7 @@ export const mockTickets: MockTicket[] = [
       {
         id: 'm7',
         senderType: 'ai',
-        senderName: 'SAV IA',
+        senderName: 'Savly',
         body: 'Bonjour Lucas,\n\nMerci d\'avoir pris le temps de nous laisser votre avis. Nous sommes sincèrement désolés pour ce délai de réponse qui ne reflète pas nos standards habituels.\n\nNous avons depuis renforcé notre équipe SAV et mis en place de nouveaux outils pour garantir une réponse sous 24h. Nous serions ravis de vous prouver notre amélioration — n\'hésitez pas à nous contacter directement.\n\nL\'équipe SAV',
         createdAt: '2026-02-08T11:15:00Z',
       },

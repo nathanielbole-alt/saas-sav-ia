@@ -4,6 +4,20 @@ import { useState, useRef } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { Plus, Minus } from 'lucide-react'
 
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06 } },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 100, damping: 20 },
+  },
+}
+
 const faqs = [
   {
     question: "Est-ce que l'IA répond vraiment bien ?",
@@ -18,12 +32,12 @@ const faqs = [
   {
     question: 'Mes données sont-elles sécurisées ?',
     answer:
-      "Vos données sont hébergées en Europe (infrastructure Supabase sur AWS Frankfurt), chiffrées au repos et en transit. Nous sommes conformes RGPD et ne partageons jamais vos données.",
+      'Vos données sont hébergées en Europe (infrastructure Supabase sur AWS Frankfurt), chiffrées au repos et en transit. Nous sommes conformes RGPD et ne partageons jamais vos données.',
   },
   {
     question: 'Puis-je tester avant de payer ?',
     answer:
-      "Le plan Pro inclut un essai gratuit de 7 jours, sans engagement et sans carte bancaire. Vous pouvez explorer toutes les fonctionnalités avant de décider.",
+      'Le plan Pro inclut un essai gratuit de 7 jours, sans engagement et sans carte bancaire. Vous pouvez explorer toutes les fonctionnalités avant de décider.',
   },
   {
     question: 'Combien de temps pour mettre en place ?',
@@ -45,58 +59,78 @@ export function FAQ() {
   return (
     <section
       id="faq"
+      role="region"
+      aria-labelledby="faq-heading"
       className="border-t border-white/[0.06] py-32"
       ref={ref}
     >
       <div className="mx-auto max-w-3xl px-6">
-        {/* Header */}
+        {/* Centered header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="mb-16"
+          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+          className="mb-16 text-center"
         >
-          <span className="font-mono text-xs uppercase tracking-widest text-zinc-600">
+          <span className="text-xs uppercase tracking-widest text-[#777]">
             FAQ
           </span>
-          <h2 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            Questions fréquentes
+          <h2
+            id="faq-heading"
+            className="mt-4 text-4xl font-semibold tracking-tighter text-[#EDEDED] md:text-5xl"
+          >
+            Questions{' '}
+            <span className="text-[#777]">fréquentes</span>
           </h2>
+          <p className="mx-auto mt-4 max-w-[42ch] text-sm leading-relaxed text-[#888]">
+            Tout ce que vous devez savoir avant de démarrer avec Savly.
+          </p>
         </motion.div>
 
         {/* Accordion */}
-        <div className="space-y-2">
+        <motion.div
+          initial="hidden"
+          animate={isInView ? 'visible' : 'hidden'}
+          variants={container}
+          className="space-y-2"
+        >
           {faqs.map((faq, i) => {
             const isOpen = openIndex === i
+            const buttonId = `faq-question-${i}`
+            const panelId = `faq-answer-${i}`
 
             return (
               <motion.div
                 key={faq.question}
-                initial={{ opacity: 0, y: 16 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.4, delay: i * 0.06 }}
+                variants={fadeUp}
                 className={`overflow-hidden rounded-xl border transition-colors ${isOpen
-                    ? 'border-white/[0.1] bg-[#0c0c10]'
+                    ? 'border-white/[0.1] bg-[#131316]'
                     : 'border-white/[0.06] bg-transparent hover:border-white/[0.1]'
                   }`}
               >
                 <button
+                  id={buttonId}
                   onClick={() => setOpenIndex(isOpen ? null : i)}
-                  className="flex w-full items-center justify-between px-6 py-5 text-left"
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  className="flex w-full items-center justify-between px-6 py-5 text-left active:scale-[0.99]"
                 >
                   <div className="flex items-center gap-4 pr-4">
-                    <span className="shrink-0 font-mono text-xs text-zinc-600">
+                    <span
+                      className="shrink-0 text-xs text-[#777]"
+                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                    >
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span className="text-[15px] font-medium text-white">
+                    <span className="text-[15px] font-medium text-[#EDEDED]">
                       {faq.question}
                     </span>
                   </div>
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.03]">
                     {isOpen ? (
-                      <Minus className="h-3 w-3 text-zinc-400" />
+                      <Minus className="h-3 w-3 text-[#888]" />
                     ) : (
-                      <Plus className="h-3 w-3 text-zinc-400" />
+                      <Plus className="h-3 w-3 text-[#888]" />
                     )}
                   </div>
                 </button>
@@ -104,14 +138,21 @@ export function FAQ() {
                 <AnimatePresence>
                   {isOpen && (
                     <motion.div
+                      id={panelId}
+                      role="region"
+                      aria-labelledby={buttonId}
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 100,
+                        damping: 20,
+                      }}
                       className="overflow-hidden"
                     >
                       <div className="px-6 pb-5 pl-[calc(1.5rem+2rem+1rem)]">
-                        <p className="text-sm leading-relaxed text-zinc-400">
+                        <p className="text-sm leading-relaxed text-[#888]">
                           {faq.answer}
                         </p>
                       </div>
@@ -121,7 +162,7 @@ export function FAQ() {
               </motion.div>
             )
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   )

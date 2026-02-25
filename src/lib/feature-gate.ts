@@ -5,7 +5,14 @@ import { PLANS, type PlanKey } from '@/lib/stripe'
 // Types
 // ---------------------------------------------------------------------------
 
-export type FeatureKey = 'tickets' | 'integrations' | 'users'
+export type FeatureKey =
+  | 'tickets'
+  | 'integrations'
+  | 'users'
+  | 'custom_branding'
+  | 'account_manager'
+  | 'sla'
+  | 'sso'
 
 export type FeatureCheck = {
   allowed: boolean
@@ -85,7 +92,28 @@ export async function checkFeatureAccess(
   orgId: string,
   feature: FeatureKey
 ): Promise<FeatureCheck> {
-  const [plan, usage] = await Promise.all([getOrgPlan(orgId), getOrgUsage(orgId)])
+  const plan = await getOrgPlan(orgId)
+
+  // Plan-gated features (no usage counters required)
+  if (feature === 'custom_branding' || feature === 'account_manager') {
+    return {
+      allowed: plan !== 'pro',
+      current: plan !== 'pro' ? 0 : 1,
+      limit: 1,
+      plan,
+    }
+  }
+
+  if (feature === 'sla' || feature === 'sso') {
+    return {
+      allowed: plan === 'enterprise',
+      current: plan === 'enterprise' ? 0 : 1,
+      limit: 1,
+      plan,
+    }
+  }
+
+  const usage = await getOrgUsage(orgId)
   const limits = PLANS[plan].limits
 
   switch (feature) {
@@ -104,6 +132,9 @@ export async function checkFeatureAccess(
       const current = usage.users
       return { allowed: current < limit, current, limit, plan }
     }
+    default:
+      // Exhaustive guard for future feature keys.
+      return { allowed: false, current: 0, limit: 0, plan }
   }
 }
 
@@ -121,6 +152,10 @@ export async function enforceFeatureAccess(
       tickets: 'tickets',
       integrations: 'intégrations',
       users: 'utilisateurs',
+      custom_branding: 'branding personnalisé',
+      account_manager: 'account manager dédié',
+      sla: 'SLA garanti',
+      sso: 'SSO / SAML',
     }
     const label = featureLabels[feature]
     const limitDisplay = check.limit === Infinity ? 'illimité' : String(check.limit)

@@ -2,6 +2,21 @@
 
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { SpotlightCard } from '@/components/landing/magnetic'
+
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.1 } },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 100, damping: 20 },
+  },
+}
 
 const problems = [
   {
@@ -23,7 +38,7 @@ const problems = [
       'Les emails se perdent entre les boîtes. Les avis Google restent ignorés.',
   },
   {
-    number: '∞',
+    number: '\u221E',
     title: 'canaux à surveiller',
     description:
       'Gmail, Instagram, Messenger, Shopify, Google Reviews. Impossible de tout suivre manuellement.',
@@ -35,49 +50,59 @@ export function Problems() {
   const isInView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section className="border-t border-white/[0.06] py-32" ref={ref}>
-      <div className="mx-auto max-w-7xl px-6">
-        {/* Header */}
+    <section
+      role="region"
+      aria-labelledby="problems-heading"
+      className="border-t border-white/[0.06] py-32"
+      ref={ref}
+    >
+      <div className="mx-auto max-w-[1400px] px-6">
+        {/* Header — left aligned per taste-skill ANTI-CENTER BIAS */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
           className="mb-20"
         >
-          <span className="font-mono text-xs uppercase tracking-widest text-zinc-600">
+          <span className="text-xs uppercase tracking-widest text-[#777]">
             Le problème
           </span>
-          <h2 className="mt-4 max-w-lg text-4xl font-bold tracking-tight text-white sm:text-5xl">
-            Votre SAV est un
+          <h2
+            id="problems-heading"
+            className="mt-4 max-w-lg text-4xl font-semibold tracking-tighter text-[#EDEDED] md:text-5xl"
+          >
+            Votre SAV vous
             <br />
-            <span className="text-zinc-500">goulet d&apos;étranglement.</span>
+            <span className="text-[#777]">freine dans votre croissance.</span>
           </h2>
         </motion.div>
 
-        {/* Stats grid — separated by 1px borders */}
-        <div className="overflow-hidden rounded-xl bg-white/[0.06]">
-          <div className="grid gap-px sm:grid-cols-2 lg:grid-cols-4">
-            {problems.map((problem, i) => (
-              <motion.div
-                key={problem.number}
-                initial={{ opacity: 0, y: 24 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="group bg-[#09090b] p-8 transition-colors hover:bg-[#0c0c10]"
-              >
-                <span className="font-mono text-4xl font-bold text-[#8b5cf6] sm:text-5xl">
+        {/* Stats — 2x2 grid */}
+        <motion.div
+          initial="hidden"
+          animate={isInView ? 'visible' : 'hidden'}
+          variants={container}
+          className="grid gap-4 sm:grid-cols-2"
+        >
+          {problems.map((problem) => (
+            <motion.div key={problem.number} variants={fadeUp} className="h-full">
+              <SpotlightCard className="h-full rounded-xl border border-white/[0.06] bg-[#131316] p-8 transition-colors hover:border-white/[0.1]">
+                <span
+                  className="text-5xl font-semibold tracking-tight text-[#E8856C]"
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
                   {problem.number}
                 </span>
-                <h3 className="mt-4 text-[15px] font-semibold text-white">
+                <h3 className="mt-4 text-[15px] font-semibold text-[#EDEDED]">
                   {problem.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+                <p className="mt-2 text-sm leading-relaxed text-[#777]">
                   {problem.description}
                 </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+              </SpotlightCard>
+            </motion.div>
+          ))}
+        </motion.div>
       </div>
     </section>
   )
