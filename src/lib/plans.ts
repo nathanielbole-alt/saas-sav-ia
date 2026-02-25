@@ -12,7 +12,7 @@ export const PLANS = {
             'Tickets illimités',
             '5 utilisateurs',
             'Toutes les intégrations',
-            'IA avancée (100 réponses / jour)',
+            'IA avancée (50 réponses / jour)',
             'Analytics détaillés',
             'Support prioritaire',
         ],
@@ -20,7 +20,7 @@ export const PLANS = {
             tickets: Infinity,
             users: 5,
             integrations: Infinity,
-            aiResponses: 100,
+            aiResponses: 50,
         },
     },
     business: {
@@ -31,7 +31,7 @@ export const PLANS = {
             'Tout dans Pro',
             'Utilisateurs illimités',
             'API access',
-            'IA avancée (500 réponses / jour)',
+            'IA avancée (250 réponses / jour)',
             'SLA garanti 99.9%',
             'Account manager dédié',
             'Custom branding',
@@ -40,7 +40,7 @@ export const PLANS = {
             tickets: Infinity,
             users: Infinity,
             integrations: Infinity,
-            aiResponses: 500,
+            aiResponses: 250,
         },
     },
     enterprise: {
@@ -49,7 +49,7 @@ export const PLANS = {
         price: 149,
         features: [
             'Tout dans Business',
-            'IA illimitée',
+            'IA avancée (750 réponses / jour)',
             'SLA garanti 99.9%',
             'Account manager dédié',
             'Custom branding',
@@ -60,7 +60,7 @@ export const PLANS = {
             tickets: Infinity,
             users: Infinity,
             integrations: Infinity,
-            aiResponses: Infinity,
+            aiResponses: 750,
         },
     },
 } as const
