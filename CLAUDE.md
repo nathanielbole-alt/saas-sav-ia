@@ -19,7 +19,7 @@ Plateforme SaaS pour gérer le Service Après-Vente avec Intelligence Artificiel
 saas-sav-ia/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx                    # Layout racine
+│   │   ├── layout.tsx                    # Layout racine (polices system fallback pour build offline)
 │   │   ├── page.tsx                      # Landing page (hero, marquee, use-cases, pricing, CTA)
 │   │   ├── login/
 │   │   │   ├── page.tsx                  # Page login (Server Component)
@@ -27,15 +27,25 @@ saas-sav-ia/
 │   │   ├── signup/
 │   │   │   ├── page.tsx                  # Page inscription (Server Component)
 │   │   │   └── signup-form.tsx           # Formulaire inscription complet (nom, email, mdp, confirmation)
+│   │   ├── (legal)/
+│   │   │   ├── confidentialite/page.tsx   # Politique de confidentialité (RGPD + Google OAuth)
+│   │   │   ├── cookies/page.tsx          # Politique cookies
+│   │   │   ├── cgu/page.tsx              # CGU
+│   │   │   └── mentions-legales/page.tsx # Mentions légales
 │   │   ├── dashboard/
-│   │   │   ├── layout.tsx                # Layout protégé (auth + sidebar)
-│   │   │   ├── page.tsx                  # Server component → client-page.tsx
-│   │   │   ├── client-page.tsx           # Dashboard inbox (tickets + detail) — auto-reply IA
+│   │   │   ├── layout.tsx                # Layout protégé (auth + topbar + unread count)
+│   │   │   ├── page.tsx                  # Vue d'ensemble (Server Component → overview-client)
+│   │   │   ├── overview-client.tsx       # Dashboard Accueil : stats, tickets urgents, récents, intégrations
 │   │   │   ├── loading.tsx               # Loading skeleton
 │   │   │   ├── template.tsx              # Page transition animations
-│   │   │   ├── tickets/page.tsx          # Vue tickets
+│   │   │   ├── inbox/
+│   │   │   │   ├── page.tsx              # Inbox (Server Component → inbox-client)
+│   │   │   │   └── inbox-client.tsx      # Inbox : liste tickets + détail + chat + lazy-load messages
+│   │   │   ├── tickets/page.tsx          # Vue tickets (tous)
 │   │   │   ├── customers/page.tsx        # Vue clients
-│   │   │   ├── analytics/page.tsx        # Analytics
+│   │   │   ├── analytics/
+│   │   │   │   ├── page.tsx              # Analytics (Server Component, passe le plan org)
+│   │   │   │   └── analytics-client.tsx  # Charts + Insights IA (débloqué pour Enterprise)
 │   │   │   ├── billing/
 │   │   │   │   ├── page.tsx              # Billing (Server Component)
 │   │   │   │   └── billing-client.tsx    # Plans Pro/Business/Enterprise + Stripe Checkout + trial badge
@@ -43,24 +53,27 @@ saas-sav-ia/
 │   │   │   │   ├── page.tsx              # Onboarding (Server Component)
 │   │   │   │   └── onboarding-client.tsx # Wizard 5 étapes (profil, canaux, politiques SAV)
 │   │   │   └── settings/
-│   │   │       ├── page.tsx              # Settings (Server Component)
-│   │   │       └── settings-client.tsx   # Profil, org, politiques SAV, intégrations
+│   │   │       ├── page.tsx              # Settings (Server Component, role-gated data)
+│   │   │       ├── settings-client.tsx   # Profil, org, politiques SAV, intégrations
+│   │   │       └── components/
+│   │   │           └── team-section.tsx   # Section équipe + invitations (token-free)
 │   │   └── api/
 │   │       ├── ai/auto-reply/route.ts          # Auto-reply IA (30s delay, re-check, admin call)
-│   │       ├── auth/callback/route.ts          # Callback OAuth Supabase (anti open-redirect + check is_onboarded → /dashboard/onboarding)
-│   │       ├── auth/gmail/route.ts             # OAuth Gmail → redirect Google
-│   │       ├── auth/gmail/callback/route.ts    # Callback Gmail → save tokens
-│   │       ├── auth/shopify/route.ts           # OAuth Shopify → redirect
-│   │       ├── auth/shopify/callback/route.ts  # Callback Shopify → HMAC + save tokens
-│   │       ├── integrations/meta/route.ts       # OAuth Meta → redirect Facebook
-│   │       ├── integrations/meta/callback/route.ts # Callback Meta → save page token + IG account
-│   │       ├── webhooks/meta/route.ts           # Webhook Meta (Instagram DM + Messenger)
+│   │       ├── auth/callback/route.ts          # Callback OAuth Supabase
+│   │       ├── cron/gmail/route.ts             # Cron job sync Gmail
+│   │       ├── integrations/gmail/route.ts     # OAuth Gmail → redirect Google
+│   │       ├── integrations/gmail/callback/route.ts  # Callback Gmail → encrypt + save tokens
+│   │       ├── integrations/shopify/route.ts   # OAuth Shopify → redirect
+│   │       ├── integrations/shopify/callback/route.ts # Callback Shopify → encrypt + save tokens
+│   │       ├── integrations/meta/route.ts      # OAuth Meta → redirect Facebook
+│   │       ├── integrations/meta/callback/route.ts   # Callback Meta → encrypt + save tokens
+│   │       ├── webhooks/meta/route.ts          # Webhook Meta (Instagram DM + Messenger)
 │   │       ├── seed/route.ts                   # Seeder mock data
 │   │       └── stripe/webhook/route.ts         # Webhook Stripe (subscription lifecycle)
 │   ├── components/
 │   │   ├── dashboard/
-│   │   │   ├── sidebar.tsx               # Sidebar + NotificationBell (cloche alertes escalade)
-│   │   │   ├── ticket-list.tsx           # Liste tickets avec filtres
+│   │   │   ├── topbar.tsx                # Topbar navigation (Accueil, Inbox, Tickets, etc.)
+│   │   │   ├── ticket-list.tsx           # Liste tickets avec filtres + preview léger (sans messages)
 │   │   │   └── ticket-detail.tsx         # Détail ticket + chat (bouton IA supprimé)
 │   │   └── landing/
 │   │       ├── navbar.tsx                # Navbar fixe (liens ancre #features, #use-cases, #pricing, #faq)
@@ -80,16 +93,18 @@ saas-sav-ia/
 │   │   ├── actions/
 │   │   │   ├── ai.ts                     # generateAIResponse() + generateAIResponseAdmin() + escalade [ESCALADE_HUMAIN]
 │   │   │   ├── billing.ts               # createCheckoutSession(), createPortalSession(), getSubscriptionInfo()
-│   │   │   ├── tickets.ts               # getTickets(), getMyTickets(), sendMessage() + trigger auto-reply
+│   │   │   ├── tickets.ts               # getTickets(), getTicketsList(), getTicketMessages(), sendMessage()
 │   │   │   ├── notifications.ts         # getUnreadNotifications(), markNotificationRead()
 │   │   │   ├── customers.ts             # CRUD customers
 │   │   │   ├── analytics.ts             # Stats dashboard
-│   │   │   ├── gmail.ts                 # syncGmail() — sync emails → tickets + trigger auto-reply
-│   │   │   ├── meta.ts                  # sendMetaReply() + refreshMetaPageToken() — Instagram/Messenger
-│   │   │   ├── shopify.ts               # syncShopifyCustomers(), syncShopifyOrders() + trigger auto-reply
+│   │   │   ├── gmail.ts                 # syncGmailMessages() (role-gated) + sendGmailReply()
+│   │   │   ├── meta.ts                  # sendMetaReply() + refreshMetaPageToken()
+│   │   │   ├── shopify.ts               # syncShopifyCustomers(), syncShopifyOrders() (role-gated)
 │   │   │   ├── integrations.ts          # getIntegrations(), disconnectIntegration()
+│   │   │   ├── invitations.ts           # sendInvitation(), getInvitations() (role-gated), getInvitationLink(), revokeInvitation(), acceptInvitation(), getTeamMembers() (role-gated), removeTeamMember()
 │   │   │   ├── onboarding.ts            # completeOnboardingStep2(), saveOnboardingPolicies(), completeOnboarding(), resetOnboarding()
 │   │   │   └── settings.ts              # updateProfile(), updateOrganization(), updateCompanyPolicies()
+│   │   ├── encryption.ts                 # AES-256-GCM encrypt/decrypt pour tokens OAuth
 │   │   ├── plans.ts                      # Définitions plans (client-safe) : Pro/Business/Enterprise + limites
 │   │   ├── stripe.ts                     # Stripe SDK server + getPlanFromPriceId() + getPriceIdForPlan()
 │   │   ├── feature-gate.ts               # getOrgPlan(), getOrgUsage(), checkFeatureAccess(), enforceFeatureAccess()
@@ -106,18 +121,24 @@ saas-sav-ia/
 │   └── types/
 │       └── database.types.ts             # Types Supabase (9 tables + helpers, incl. notifications)
 ├── scripts/
-│   └── setup-stripe.ts                   # Crée produits/prix Stripe + écrit .env.local
+│   ├── setup-stripe.ts                   # Crée produits/prix Stripe + écrit .env.local
+│   ├── set-enterprise.mjs               # Met à jour le plan org → enterprise en DB
+│   ├── list-users.mjs                    # Liste les utilisateurs Supabase
+│   └── check-sub.ts                      # Vérifie la subscription d'un utilisateur
 ├── supabase/migrations/
 │   ├── 00001_initial_schema.sql          # 7 tables, 5 enums, indexes, triggers, RLS
 │   ├── 00002_auth_trigger_rls.sql        # Auto-profil + RLS policies
+│   ├── 00003_integrations.sql            # Table integrations (tokens chiffrés AES-256-GCM)
 │   ├── 00005_notifications.sql           # Table notifications + RLS + indexes
 │   ├── 00006_enable_realtime.sql         # Active Realtime sur messages, tickets, notifications
 │   ├── 00007_add_business_plan.sql       # Ajout 'business' + 'enterprise' à la contrainte plan
 │   ├── 00008_add_enterprise_plan_pricing.sql # Re-garantit contrainte plan avec enterprise
 │   ├── 00009_remove_free_plan.sql        # Supprime free, colonne subscription_status, default pro
+│   ├── 00010_add_social_channels.sql     # Enum instagram/messenger + metadata JSONB
 │   ├── 00011_onboarding.sql              # Colonnes onboarding (profiles.is_onboarded, industry)
 │   ├── 00012_company_policies.sql        # Colonnes organizations.refund_policy + organizations.sav_policy
-│   └── 00013_onboarding_enrichment.sql   # Colonnes profiles.team_size + profiles.ticket_volume
+│   ├── 00013_onboarding_enrichment.sql   # Colonnes profiles.team_size + profiles.ticket_volume
+│   └── 00014_user_invitations.sql        # Table invitations + RLS
 └── .env.local                            # Secrets (GITIGNORED)
 ```
 
@@ -206,14 +227,14 @@ saas-sav-ia/
 - ✅ **Manifest + SEO metadata** : mis à jour
 - ✅ **Logo "S"** conservé tel quel (cohérent avec Savly)
 
-### Dashboard (État actuel)
-- ✅ Sidebar gauche avec navigation complète + NotificationBell
-- ✅ Inbox centralisée : liste tickets avec filtres (all/unread/mine) + recherche
-- ✅ Vue détail ticket : chat interface + métadonnées client + refund sidebar
-- ✅ Analytics : graphiques SVG custom (area, bar, ring) + KPIs + heatmap
+### Dashboard (Refonte Apple-style — 28/02/2026)
+- ✅ **Topbar navigation** : Accueil, Inbox, Tickets, Clients, Analytics, Billing, Settings (remplace la sidebar)
+- ✅ **Page d'accueil `/dashboard`** : vue d'ensemble avec Bento Grid (Non lus, Urgences, Résolus, Ouverts), tickets urgents, récemment reçus, lien rapide intégrations
+- ✅ **Inbox déplacée vers `/dashboard/inbox`** : séparation claire entre accueil et boîte de réception
+- ✅ **Inbox optimisée (PERF-01)** : `getTicketsList()` charge la liste sans messages, `getTicketMessages()` charge les messages à la demande (lazy loading)
+- ✅ **Analytics Enterprise** : section "Insights IA Détaillés" dynamiquement débloquée pour le plan Enterprise (feature gate `plan` prop)
 - ✅ Loading skeletons + transition animations
-- ✅ Design dark mode avec Aurora gradients et noise texture
-- ⚠️ **Refonte Apple-style prévue** : redesign complet du dashboard (layout, sidebar, inbox, analytics, tous les composants) — voir prompt Claude Code dédié
+- ✅ Design dark mode premium Apple-style (glassmorphism, gradients subtils, typographie soignée)
 
 ### Supabase Integration
 - ✅ Seeder script (`/api/seed`) pour mock data
@@ -297,14 +318,17 @@ saas-sav-ia/
 - ✅ Colonne `subscription_status` : 'active' | 'trialing' | 'past_due' | 'canceled'
 - ✅ Script `scripts/setup-stripe.ts` : crée les 3 produits/prix et écrit les IDs dans .env.local
 
-### Security Audit
-- ✅ Token sanitization (pas de leak access_token côté client)
+### Security Audit (01/03/2026 — Codex)
+- ✅ **SEC-01** : Invitations/team data restreint aux `owner`/`admin` côté serveur. Le `token` n'est plus exposé au client. Lien invitation récupéré via `getInvitationLink()` (server action dédiée)
+- ✅ **SEC-02** : Tokens OAuth chiffrés AES-256-GCM (`encryption.ts`). Gmail/Meta/Shopify callbacks chiffrent avant stockage, lecteurs déchiffrent côté serveur uniquement
+- ✅ **SEC-03** : `syncGmailMessages()` et `syncShopifyOrders()` vérifient le rôle `owner`/`admin` côté serveur (pas seulement l'UI)
+- ✅ **SEC-04** : CSP durcie — `'unsafe-eval'` retiré de `script-src` dans `next.config.ts`
 - ✅ OAuth CSRF (nonce + httpOnly cookie)
 - ✅ Rate limiting (AI 50/jour, Gmail sync 1/5min)
 - ✅ Zod validation sur toutes les Server Actions
 - ✅ JSONB index + RLS UPDATE policy
-- ✅ Types propres (pas de `any`)
 - ✅ Aria-labels pour a11y
+- ✅ RLS multi-tenant propre (pas de fuite inter-entreprises)
 
 ### Supabase Realtime (Codex 5.3)
 - ✅ **Hook `useRealtimeTickets()`** : subscription live sur `messages` (INSERT) et `tickets` (INSERT/UPDATE)
@@ -334,7 +358,7 @@ saas-sav-ia/
   - Tickets : check dans `tickets.create` (tRPC), `syncShopifyOrders()`, `syncGmailMessages()`
   - Intégrations : check dans Gmail/Shopify OAuth callbacks (bloque uniquement les nouvelles, pas les reconnexions)
 - ✅ **UI Billing** : barres de progression d'usage (tickets, IA, intégrations, utilisateurs) dans la page facturation
-- ⚠️ User invite enforcement non implémenté (pas de feature d'invitation existante)
+- ✅ User invite enforcement : limites vérifiées dans `sendInvitation()`
 
 ### Instagram & Messenger Integration
 - ✅ OAuth flow Meta (route + callback + CSRF cookie)
@@ -349,6 +373,10 @@ saas-sav-ia/
 - [ ] Google Reviews integration (en attente validation API Google Business)
 - [ ] Déploiement Vercel
 - [ ] Tests end-to-end auto-reply + escalade
+- [ ] Vérification Google OAuth (sortie du mode "Test" → production)
+- [ ] Agrégations SQL/rollups pour analytics (actuellement scan complet à chaque rendu)
+- [ ] `supabase gen types` pour remplacer les types DB manuels
+- [ ] Second passage régressions temps réel inbox + intégrations OAuth
 
 ## Base de données
 
@@ -363,7 +391,8 @@ saas-sav-ia/
 | `tags` | Tags de catégorisation |
 | `ticket_tags` | Relation N:N tickets ↔ tags |
 | `notifications` | Alertes escalade IA → humain (type, title, body, read) |
-| `integrations` | Gmail, Shopify, Stripe (tokens, status) |
+| `integrations` | Gmail, Shopify, Stripe, Meta (tokens chiffrés AES-256-GCM, status) |
+| `invitations` | Invitations d'équipe (email, role, token, status, expires_at) |
 
 ## Variables d'environnement
 
@@ -385,6 +414,10 @@ saas-sav-ia/
 | `STRIPE_BUSINESS_PRICE_ID` | Price ID Stripe pour le plan Business |
 | `STRIPE_ENTERPRISE_PRICE_ID` | Price ID Stripe pour le plan Enterprise |
 | `STRIPE_WEBHOOK_SECRET` | Secret webhook Stripe (whsec_...) |
+| `ENCRYPTION_KEY` | Clé AES-256-GCM pour chiffrer les tokens OAuth (32 bytes hex) |
+| `META_APP_ID` | App ID Meta (Facebook/Instagram) |
+| `META_APP_SECRET` | App Secret Meta |
+| `META_VERIFY_TOKEN` | Token vérification webhook Meta |
 
 ## Commandes utiles
 
@@ -394,18 +427,24 @@ npm run build                      # Build production
 npx tsc --noEmit                   # Type check
 npx supabase db push               # Appliquer migrations
 npx tsx scripts/setup-stripe.ts --write-env  # Créer produits Stripe + écrire .env.local
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"  # Générer ENCRYPTION_KEY
+node scripts/set-enterprise.mjs    # Mettre à jour le plan org → enterprise
 stripe listen --forward-to localhost:3000/api/stripe/webhook  # Écouter webhooks Stripe en dev
 ```
 
 ## Notes techniques
 
 - L'IA (ai.ts) utilise GPT-4o-mini avec contexte client complet (Shopify + historique). Le prompt a été enrichi par Codex 5.3.
-- Stripe customer ID est stocké dans la table `integrations` (provider='stripe', access_token=customer_id) plutôt que dans profiles.
+- Stripe customer ID est stocké dans la table `integrations` (provider='stripe', access_token=customer_id) plutôt que dans profiles. **Ne PAS chiffrer** le customer_id Stripe (ce n'est pas un token OAuth).
 - **Plan par défaut** à l'inscription = `'pro'` (trigger SQL `handle_new_user()`). Plus de plan gratuit.
 - **Essai 7 jours** : uniquement sur le plan Pro via `trial_period_days: 7` dans Stripe Checkout. Business et Enterprise = paiement immédiat.
 - **`plans.ts` est client-safe** : ne contient aucun import Stripe ni env var serveur. Les composants `'use client'` importent depuis `@/lib/plans`, pas `@/lib/stripe`.
 - App Google OAuth en mode "Test" : ajouter les emails dans Console Google → OAuth → Audience pour tester.
 - Les données Shopify sont stockées dans `customers.metadata` au format JSONB avec parsing Zod sécurisé.
+- **Chiffrement tokens OAuth** : `encryption.ts` utilise AES-256-GCM + `ENCRYPTION_KEY`. Les callbacks OAuth chiffrent avant upsert, les lecteurs (gmail.ts, meta.ts, shopify.ts) déchiffrent côté serveur. Re-chiffrement automatique à la rotation de token.
+- **Inbox performance** : `getTicketsList()` charge la liste sans messages (preview only), `getTicketMessages(ticketId)` charge les messages à la demande. Les consumers (inbox/page.tsx, dashboard/page.tsx) utilisent `getTicketsList()`.
+- **Build script** : utilise Webpack (pas Turbopack) via `next build` pour stabilité. Dev utilise Turbopack via `next dev --turbopack`.
+- **Polices** : system font stack (fallback) pour build offline-compatible. Plus de dépendance `next/font/google` au build time.
 
 ## Changelog landing page
 

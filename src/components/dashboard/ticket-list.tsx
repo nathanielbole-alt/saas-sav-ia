@@ -89,7 +89,7 @@ export function TicketList({
   onSearchChange: (q: string) => void
 }) {
   return (
-    <div className="flex h-full w-[380px] shrink-0 flex-col border-r border-white/[0.06] bg-[#0B0B0F]">
+    <div className="flex h-full w-[380px] shrink-0 flex-col rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-2xl shadow-2xl ml-4 mt-2 mb-4 overflow-hidden">
       {/* Header */}
       <div className="shrink-0 px-5 pt-5 pb-4">
         <div className="flex items-center justify-between mb-5">
@@ -108,27 +108,27 @@ export function TicketList({
 
         {/* Search */}
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#86868b]" />
           <input
             type="text"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Rechercher..."
-            className="w-full rounded-lg bg-[#131316] border border-white/[0.06] py-2 pl-10 pr-4 text-[13px] text-[#EDEDED] outline-none placeholder:text-[#555] focus:ring-1 focus:ring-[#E8856C]/50 transition-all duration-150"
+            className="w-full rounded-2xl bg-black/20 border border-white/5 py-2.5 pl-10 pr-4 text-[13px] text-white outline-none placeholder:text-[#86868b] focus:ring-1 focus:ring-[#0a84ff]/50 transition-all duration-300"
           />
         </div>
 
         {/* Segmented Control */}
-        <div className="flex rounded-lg bg-[#131316] p-0.5 border border-white/[0.06]">
+        <div className="flex rounded-full bg-black/20 p-1 border border-white/5 shadow-inner">
           {filters.map((f) => (
             <button
               key={f.value}
               onClick={() => onFilterChange(f.value)}
               className={cn(
-                "flex-1 rounded-md py-1.5 text-[12px] font-medium transition-all duration-150",
+                "flex-1 rounded-full py-1.5 text-[12px] font-medium transition-all duration-300",
                 filter === f.value
-                  ? "bg-white/[0.06] text-[#EDEDED] shadow-sm"
-                  : "text-[#888] hover:text-[#EDEDED]"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-[#86868b] hover:text-white"
               )}
             >
               {f.label}
@@ -138,18 +138,20 @@ export function TicketList({
       </div>
 
       {/* Ticket list */}
-      <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-0.5">
+      <div className="flex-1 overflow-y-auto w-full">
         {tickets.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#131316] border border-white/[0.06] mb-4">
-              <Inbox className="h-6 w-6 text-[#555]" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/5 border border-white/10 mb-4 shadow-sm">
+              <Inbox className="h-6 w-6 text-[#86868b]" />
             </div>
-            <p className="text-[14px] font-medium text-[#888]">Tout est calme</p>
-            <p className="text-[12px] text-[#555] mt-1">Aucun ticket à traiter.</p>
+            <p className="text-[14px] font-medium text-white shadow-sm">Tout est calme</p>
+            <p className="text-[12px] text-[#86868b] mt-1">Aucun ticket à traiter.</p>
           </div>
         ) : (
           tickets.map((ticket) => {
             const lastMsg = ticket.messages[ticket.messages.length - 1]
+            const lastMessageBody = lastMsg?.body ?? ticket.lastMessagePreview ?? ''
+            const lastMessageAt = lastMsg?.createdAt ?? ticket.lastMessageAt ?? ticket.createdAt
             const ChannelIcon = channelIcons[ticket.channel]
             const isSelected = ticket.id === selectedId
             const PriorityIcon = priorityConfig[ticket.priority].icon
@@ -159,10 +161,10 @@ export function TicketList({
                 key={ticket.id}
                 onClick={() => onSelect(ticket.id)}
                 className={cn(
-                  "group w-full rounded-xl p-3.5 text-left transition-colors duration-150",
+                  "group w-full p-4 text-left transition-all duration-300 border-b border-white/5 last:border-0",
                   isSelected
-                    ? "bg-[#131316] border border-white/[0.06]"
-                    : "border border-transparent hover:bg-white/[0.04]"
+                    ? "bg-white/10 border-l-2 border-l-[#0a84ff]"
+                    : "bg-transparent hover:bg-white/5 border-l-2 border-l-transparent"
                 )}
               >
                 <div className="flex gap-3">
@@ -177,49 +179,49 @@ export function TicketList({
                       {getInitials(ticket.customer.name)}
                     </div>
                     {ticket.unread && (
-                      <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#E8856C] ring-2 ring-[#0B0B0F]" />
+                      <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.8)]" />
                     )}
-                    <div className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#0B0B0F] ring-1 ring-white/[0.08]">
-                      <ChannelIcon className="h-2 w-2 text-[#888]" />
+                    <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/50 backdrop-blur-md ring-1 ring-white/20 shadow-sm">
+                      <ChannelIcon className="h-2 w-2 text-[#86868b]" />
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                    <div className="flex items-center justify-between gap-2 mb-1">
                       <span
                         className={cn(
-                          "truncate text-[13px]",
+                          "truncate text-[13px] shadow-sm",
                           ticket.unread || isSelected
-                            ? "font-semibold text-[#EDEDED]"
-                            : "font-medium text-[#888]"
+                            ? "font-semibold text-white"
+                            : "font-medium text-white"
                         )}
                       >
                         {ticket.customer.name}
                       </span>
-                      <span className="shrink-0 text-[11px] text-[#555]">
-                        {timeAgo(lastMsg?.createdAt ?? ticket.createdAt)}
+                      <span className="shrink-0 text-[11px] text-[#86868b] font-medium">
+                        {timeAgo(lastMessageAt)}
                       </span>
                     </div>
 
                     <p
                       className={cn(
-                        "truncate text-[12px] mb-1",
-                        ticket.unread ? "font-medium text-[#EDEDED]" : "text-[#888]"
+                        "truncate text-[13px] leading-tight mb-1.5 shadow-sm",
+                        ticket.unread ? "font-medium text-white" : "text-[#86868b]"
                       )}
                     >
                       {ticket.subject}
                     </p>
 
-                    <p className="truncate text-[11px] text-[#555]">
-                      {lastMsg?.body.replace(/\n/g, ' ').slice(0, 55)}...
+                    <p className="truncate text-[12px] text-[#86868b] mb-2.5">
+                      {lastMessageBody.replace(/\n/g, ' ').slice(0, 60)}{lastMessageBody ? '...' : ''}
                     </p>
 
                     {/* Meta row */}
-                    <div className="mt-2 flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest bg-white/5 shadow-sm border border-white/5",
                           priorityConfig[ticket.priority].style
                         )}
                       >
@@ -230,7 +232,7 @@ export function TicketList({
                       {ticket.tags.slice(0, 2).map((tag) => (
                         <span
                           key={tag}
-                          className="rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-[#555]"
+                          className="rounded-full bg-white/5 border border-white/5 shadow-sm px-2 py-0.5 text-[10px] font-medium text-[#86868b]"
                         >
                           {tag}
                         </span>

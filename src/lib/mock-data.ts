@@ -28,6 +28,9 @@ export type MockTicket = {
   tags: string[]
   csatRating: number | null
   createdAt: string
+  lastMessagePreview?: string | null
+  lastMessageAt?: string | null
+  lastMessageSenderType?: MockMessage['senderType'] | null
   messages: MockMessage[]
 }
 

@@ -7,6 +7,7 @@ import {
   getIntegrationStatus,
   disconnectIntegration,
 } from '@/lib/actions/integrations'
+import { decrypt } from '@/lib/encryption'
 import type { Integration, Json } from '@/types/database.types'
 import { triggerAutoReply } from '@/lib/ai/auto-reply'
 import { checkFeatureAccess } from '@/lib/feature-gate'
@@ -171,11 +172,18 @@ async function getShopifyContext() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id')
+    .select('organization_id, role')
     .eq('id', user.id)
     .single()
 
   if (!profile) return { error: 'No profile' as const }
+
+  const role = (profile as { role?: string })?.role
+  if (role !== 'owner' && role !== 'admin') {
+    return {
+      error: 'Seuls les propriétaires et administrateurs peuvent synchroniser' as const,
+    }
+  }
 
   const orgId = (profile as unknown as { organization_id: string })
     .organization_id
@@ -204,8 +212,10 @@ async function getShopifyContext() {
   const int = integration as Integration
   const shop = getShopFromMetadata(int.metadata)
   if (!shop) return { error: 'Invalid Shopify metadata' as const }
+  const accessToken = int.access_token ? decrypt(int.access_token) : null
+  if (!accessToken) return { error: 'Shopify token missing' as const }
 
-  return { supabase, orgId, integration: int, shop }
+  return { supabase, orgId, integration: int, shop, accessToken }
 }
 
 export async function syncShopifyCustomers(): Promise<{
@@ -218,14 +228,14 @@ export async function syncShopifyCustomers(): Promise<{
     return { success: false, count: 0, error: ctx.error }
   }
 
-  const { supabase, orgId, integration, shop } = ctx
+  const { supabase, orgId, integration, shop, accessToken } = ctx
 
   try {
     const response = await fetch(
       `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/customers.json?limit=50`,
       {
         headers: {
-          'X-Shopify-Access-Token': integration.access_token!,
+          'X-Shopify-Access-Token': accessToken,
           'Content-Type': 'application/json',
         },
       }
@@ -308,10 +318,7 @@ export async function syncShopifyOrders(): Promise<{
     return { success: false, count: 0, error: ctx.error }
   }
 
-  const { supabase, orgId, integration, shop } = ctx
-  if (!integration.access_token) {
-    return { success: false, count: 0, error: 'Shopify token missing' }
-  }
+  const { supabase, orgId, integration, shop, accessToken } = ctx
 
   // Check ticket quota before syncing orders (each order creates a ticket)
   const ticketCheck = await checkFeatureAccess(orgId, 'tickets')
@@ -324,7 +331,7 @@ export async function syncShopifyOrders(): Promise<{
       `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/orders.json?limit=50&status=any`,
       {
         headers: {
-          'X-Shopify-Access-Token': integration.access_token!,
+          'X-Shopify-Access-Token': accessToken,
           'Content-Type': 'application/json',
         },
       }
@@ -369,7 +376,7 @@ export async function syncShopifyOrders(): Promise<{
       let refunds: StoredRefund[] = []
 
       try {
-        refunds = await fetchOrderRefunds(shop, integration.access_token, order.id)
+        refunds = await fetchOrderRefunds(shop, accessToken, order.id)
       } catch (error) {
         const message = error instanceof Error ? error.message : 'refunds_failed'
         if (

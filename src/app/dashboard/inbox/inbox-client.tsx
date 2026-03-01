@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { TicketList, type TicketFilter } from '@/components/dashboard/ticket-list'
 import { TicketDetail } from '@/components/dashboard/ticket-detail'
-import { sendMessage } from '@/lib/actions/tickets'
+import { getTicketMessages, sendMessage } from '@/lib/actions/tickets'
 import { type MockTicket, type MockMessage } from '@/lib/mock-data'
 import { useRealtimeTickets } from '@/hooks/use-realtime-tickets'
 
@@ -29,10 +29,18 @@ export default function DashboardClient({
     const [selectedId, setSelectedId] = useState<string | null>(initialSelection)
     const [filter, setFilter] = useState<TicketFilter>('all')
     const [search, setSearch] = useState('')
+    const loadedMessagesRef = useRef(
+        new Set(initialTickets.filter((ticket) => ticket.messages.length > 0).map((ticket) => ticket.id))
+    )
 
     // Sync with server data when it changes (after actions)
     useEffect(() => {
         const timeout = setTimeout(() => {
+            loadedMessagesRef.current = new Set(
+                initialTickets
+                    .filter((ticket) => ticket.messages.length > 0)
+                    .map((ticket) => ticket.id)
+            )
             setTickets(initialTickets)
             setSelectedId((previousSelectedId) => {
                 if (
@@ -56,6 +64,63 @@ export default function DashboardClient({
         return () => clearTimeout(timeout)
     }, [initialTickets, initialSelectedId, setTickets])
 
+    useEffect(() => {
+        if (!selectedId || loadedMessagesRef.current.has(selectedId)) return
+
+        const selectedTicket = tickets.find((ticket) => ticket.id === selectedId)
+        if (!selectedTicket) return
+
+        let isActive = true
+
+        void getTicketMessages(selectedId).then((messages) => {
+            if (!isActive) return
+
+            loadedMessagesRef.current.add(selectedId)
+
+            setTickets((previousTickets) =>
+                previousTickets.map((ticket) => {
+                    if (ticket.id !== selectedId) return ticket
+
+                    const tempMessages = ticket.messages.filter((message) =>
+                        message.id.startsWith('m-temp-')
+                    )
+                    const mergedMessages = [...messages]
+
+                    for (const tempMessage of tempMessages) {
+                        if (!mergedMessages.some((message) => message.id === tempMessage.id)) {
+                            mergedMessages.push(tempMessage)
+                        }
+                    }
+
+                    mergedMessages.sort(
+                        (a, b) =>
+                            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                    )
+
+                    const lastMessage = mergedMessages[mergedMessages.length - 1]
+
+                    return {
+                        ...ticket,
+                        unread:
+                            ticket.status === 'open' &&
+                            lastMessage?.senderType === 'customer',
+                        lastMessagePreview:
+                            lastMessage?.body ?? ticket.lastMessagePreview ?? null,
+                        lastMessageAt:
+                            lastMessage?.createdAt ?? ticket.lastMessageAt ?? null,
+                        lastMessageSenderType:
+                            lastMessage?.senderType ?? ticket.lastMessageSenderType ?? null,
+                        messages: mergedMessages,
+                    }
+                })
+            )
+        })
+
+        return () => {
+            isActive = false
+        }
+    }, [selectedId, tickets, setTickets])
+
     // ── Filtered tickets ────────────────────────────────────────────────────
 
     const filteredTickets = tickets.filter((t) => {
@@ -64,12 +129,13 @@ export default function DashboardClient({
 
         if (search.trim()) {
             const q = search.toLowerCase()
-            const lastMsg = t.messages[t.messages.length - 1]
+            const lastMessageBody =
+                t.messages[t.messages.length - 1]?.body ?? t.lastMessagePreview ?? ''
             return (
                 t.subject.toLowerCase().includes(q) ||
                 t.customer.name.toLowerCase().includes(q) ||
                 t.customer.email.toLowerCase().includes(q) ||
-                (lastMsg?.body.toLowerCase().includes(q) ?? false)
+                lastMessageBody.toLowerCase().includes(q)
             )
         }
 
@@ -114,6 +180,9 @@ export default function DashboardClient({
                 const updatedTicket: MockTicket = {
                   ...target,
                   unread: false,
+                  lastMessagePreview: newMsg.body,
+                  lastMessageAt: newMsg.createdAt,
+                  lastMessageSenderType: newMsg.senderType,
                   messages: [...target.messages, newMsg],
                 }
 

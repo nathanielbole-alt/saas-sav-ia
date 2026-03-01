@@ -8,6 +8,7 @@ import { rateLimit } from '@/lib/rate-limit'
 import type { Integration } from '@/types/database.types'
 import { triggerAutoReply } from '@/lib/ai/auto-reply'
 import { checkFeatureAccess } from '@/lib/feature-gate'
+import { decrypt, encrypt } from '@/lib/encryption'
 import { z } from 'zod'
 
 function getOAuth2Client() {
@@ -20,10 +21,16 @@ function getOAuth2Client() {
 
 async function getAuthedClient(integration: Integration) {
   const oauth2Client = getOAuth2Client()
+  const accessToken = integration.access_token
+    ? decrypt(integration.access_token)
+    : undefined
+  const refreshToken = integration.refresh_token
+    ? decrypt(integration.refresh_token)
+    : undefined
 
   oauth2Client.setCredentials({
-    access_token: integration.access_token,
-    refresh_token: integration.refresh_token,
+    access_token: accessToken,
+    refresh_token: refreshToken,
     expiry_date: integration.token_expires_at
       ? new Date(integration.token_expires_at).getTime()
       : undefined,
@@ -31,12 +38,12 @@ async function getAuthedClient(integration: Integration) {
 
   // Auto-refresh if expired
   const tokenInfo = await oauth2Client.getAccessToken()
-  if (tokenInfo.token && tokenInfo.token !== integration.access_token) {
+  if (tokenInfo.token && tokenInfo.token !== accessToken) {
     // Token was refreshed, update in DB
     await supabaseAdmin
       .from('integrations')
       .update({
-        access_token: tokenInfo.token,
+        access_token: encrypt(tokenInfo.token),
         token_expires_at: oauth2Client.credentials.expiry_date
           ? new Date(oauth2Client.credentials.expiry_date).toISOString()
           : null,
@@ -208,11 +215,20 @@ export async function syncGmailMessages(): Promise<{
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('organization_id')
+    .select('organization_id, role')
     .eq('id', user.id)
     .single()
 
   if (!profile) return { success: false, count: 0, error: 'No profile' }
+
+  const role = (profile as { role?: string })?.role
+  if (role !== 'owner' && role !== 'admin') {
+    return {
+      success: false,
+      count: 0,
+      error: 'Seuls les propriétaires et administrateurs peuvent synchroniser',
+    }
+  }
 
   // Rate limit: max 1 sync per 5 minutes per org
   const orgId = (profile as unknown as { organization_id: string }).organization_id

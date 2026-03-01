@@ -4,12 +4,13 @@ import { getTeamMembers, getInvitations } from '@/lib/actions/invitations'
 import SettingsClient from './settings-client'
 
 export default async function SettingsPage() {
-  const [profile, organization, integrations, teamMembers, invitations] = await Promise.all([
-    getProfile(),
+  const profile = await getProfile()
+
+  const [organization, integrations, teamMembers, invitations] = await Promise.all([
     getOrganization(),
     getAllIntegrations(),
-    getTeamMembers(),
-    getInvitations(),
+    profile?.role === 'owner' || profile?.role === 'admin' ? getTeamMembers() : Promise.resolve([]),
+    profile?.role === 'owner' || profile?.role === 'admin' ? getInvitations() : Promise.resolve([]),
   ])
 
   return (

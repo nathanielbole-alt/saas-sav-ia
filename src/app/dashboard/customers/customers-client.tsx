@@ -101,15 +101,15 @@ export default function CustomersClient({
   }, [initialCustomers, search, sortBy])
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#0B0B0F]">
+    <div className="flex h-full flex-col overflow-hidden mt-2 mb-4 mx-4 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-2xl shadow-2xl">
       {/* Header */}
-      <div className="shrink-0 px-8 pt-8 pb-6 border-b border-[white/[0.06]]">
-        <div className="flex items-center justify-between mb-6">
+      <div className="shrink-0 px-8 pt-8 pb-6 border-b border-white/5 bg-white/[0.02]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-[22px] font-semibold text-[#EDEDED] tracking-tight">
+            <h1 className="text-[22px] font-semibold text-white tracking-tight shadow-sm">
               Clients
             </h1>
-            <p className="mt-1 text-[13px] text-[#888]">
+            <p className="mt-1 text-[13px] text-[#86868b]">
               {initialCustomers.length} client
               {initialCustomers.length > 1 ? 's' : ''} au total
             </p>
@@ -118,7 +118,7 @@ export default function CustomersClient({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="rounded-lg bg-[#1A1A1F] px-3 py-2 text-[13px] text-[#EDEDED] outline-none focus:ring-1 focus:ring-[#E8856C]/50 transition-all cursor-pointer"
+            className="rounded-full bg-black/20 border border-white/5 px-4 py-2 text-[13px] text-white outline-none focus:ring-1 focus:ring-[#0a84ff]/50 transition-all cursor-pointer shadow-inner appearance-none pr-8 relative bg-no-repeat bg-[right_12px_center] bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2386868b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')]"
           >
             <option value="last_contact">Dernier contact</option>
             <option value="ticket_count">Nombre de tickets</option>
@@ -129,99 +129,106 @@ export default function CustomersClient({
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#555]" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#86868b]" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher par nom, email, telephone..."
-            className="w-full rounded-lg bg-[#1A1A1F] py-3 pl-11 pr-4 text-[13px] text-[#EDEDED] outline-none placeholder:text-[#555] focus:ring-1 focus:ring-[#E8856C]/50 transition-all"
+            placeholder="Rechercher par nom, email, téléphone..."
+            className="w-full rounded-2xl bg-black/20 border border-white/5 py-3 pl-11 pr-4 text-[14px] text-white outline-none placeholder:text-[#86868b] focus:ring-1 focus:ring-[#0a84ff]/50 transition-all shadow-inner"
           />
         </div>
       </div>
 
       {/* Customer Grid */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
         {customers.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#131316] mb-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 border border-white/10 shadow-sm mb-5">
               {search ? (
-                <Search className="h-6 w-6 text-[#555]" />
+                <Search className="h-6 w-6 text-[#86868b]" />
               ) : (
-                <Users className="h-6 w-6 text-[#555]" />
+                <Users className="h-6 w-6 text-[#86868b]" />
               )}
             </div>
-            <p className="text-[14px] font-medium text-[#EDEDED]">
-              {search ? 'Aucun resultat' : 'Aucun client'}
-            </p>
-            <p className="text-[12px] text-[#888] mt-1">
+            <h3 className="text-[17px] font-semibold text-white tracking-tight shadow-sm">
+              {search ? 'Aucun résultat' : 'Aucun client'}
+            </h3>
+            <p className="text-[13px] text-[#86868b] mt-1">
               {search
                 ? 'Essayez une autre recherche'
                 : 'Les clients apparaitront ici'}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
             {customers.map((customer) => {
               const displayName = customer.full_name ?? customer.email
 
               return (
                 <div
                   key={customer.id}
-                  className="rounded-2xl bg-[#131316] p-5 hover:bg-[#1A1A1F] transition-colors duration-150"
+                  className="rounded-3xl bg-white/[0.03] border border-white/5 p-6 shadow-xl hover:bg-white/5 hover:border-white/10 hover:-translate-y-1 transition-all duration-300 group"
                 >
-                  <div className="flex items-start gap-4 mb-4">
+                  <div className="flex items-start gap-4 mb-5">
                     <div
                       className={cn(
-                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold',
+                        'flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[14px] font-bold shadow-inner border border-white/5',
                         getAvatarColor(displayName)
                       )}
                     >
                       {getInitials(displayName)}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-[14px] font-semibold text-[#EDEDED] truncate">
+                    <div className="min-w-0 flex-1 pt-1">
+                      <h3 className="text-[15px] font-semibold text-white truncate shadow-sm">
                         {displayName}
                       </h3>
                       {customer.full_name && (
-                        <p className="text-[12px] text-[#888] truncate">
+                        <p className="text-[13px] text-[#86868b] truncate mt-0.5">
                           {customer.email}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-3 p-4 rounded-2xl bg-black/20 border border-white/5 shadow-inner">
                     {!customer.full_name && (
-                      <div className="flex items-center gap-2.5 text-[12px]">
-                        <Mail className="h-3.5 w-3.5 text-[#555]" />
-                        <span className="text-[#888] truncate">
+                      <div className="flex items-center gap-3 text-[13px]">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 border border-white/5">
+                          <Mail className="h-3.5 w-3.5 text-[#86868b] group-hover:text-white transition-colors" />
+                        </div>
+                        <span className="text-[#86868b] font-medium truncate">
                           {customer.email}
                         </span>
                       </div>
                     )}
 
                     {customer.phone && (
-                      <div className="flex items-center gap-2.5 text-[12px]">
-                        <Phone className="h-3.5 w-3.5 text-[#555]" />
-                        <span className="text-[#888]">{customer.phone}</span>
+                      <div className="flex items-center gap-3 text-[13px]">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 border border-white/5">
+                          <Phone className="h-3.5 w-3.5 text-[#86868b] group-hover:text-white transition-colors" />
+                        </div>
+                        <span className="text-[#86868b] font-medium">{customer.phone}</span>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2.5 text-[12px]">
-                      <Ticket className="h-3.5 w-3.5 text-[#555]" />
-                      <span className="text-[#888]">
-                        {customer.ticket_count} ticket
-                        {customer.ticket_count > 1 ? 's' : ''}
+                    <div className="flex items-center gap-3 text-[13px]">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0a84ff]/10 border border-[#0a84ff]/20">
+                        <Ticket className="h-3.5 w-3.5 text-[#0a84ff]" />
+                      </div>
+                      <span className="text-white font-medium">
+                        {customer.ticket_count} ticket{customer.ticket_count > 1 ? 's' : ''}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2.5 text-[12px]">
-                      <Clock className="h-3.5 w-3.5 text-[#555]" />
-                      <span className="text-[#888]">
+                    <div className="flex items-center gap-3 text-[13px]">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 border border-white/5">
+                        <Clock className="h-3.5 w-3.5 text-[#86868b] group-hover:text-[#ff9f0a] transition-colors" />
+                      </div>
+                      <span className="text-[#86868b] font-medium">
                         {customer.last_contact
-                          ? `Dernier contact ${timeAgo(customer.last_contact)}`
-                          : 'Aucun ticket'}
+                          ? `Il y a ${timeAgo(customer.last_contact)}`
+                          : 'Aucun contact'}
                       </span>
                     </div>
                   </div>

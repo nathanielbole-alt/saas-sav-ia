@@ -1,6 +1,7 @@
 'use server'
 
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { decrypt, encrypt } from '@/lib/encryption'
 import { z } from 'zod'
 import type { Integration } from '@/types/database.types'
 
@@ -52,6 +53,8 @@ export async function sendMetaReply(params: {
 
     const typedIntegration = integration as Integration
     const pageAccessToken = typedIntegration.access_token
+        ? decrypt(typedIntegration.access_token)
+        : null
 
     if (!pageAccessToken) {
         return { success: false, error: 'No Meta page access token' }
@@ -131,7 +134,9 @@ export async function refreshMetaPageToken(
     if (!integration) return { success: false }
 
     const typedIntegration = integration as Integration
-    const userToken = typedIntegration.refresh_token // Long-lived user token
+    const userToken = typedIntegration.refresh_token
+        ? decrypt(typedIntegration.refresh_token)
+        : null // Long-lived user token
 
     if (!userToken) return { success: false }
 
@@ -181,8 +186,8 @@ export async function refreshMetaPageToken(
         await supabaseAdmin
             .from('integrations')
             .update({
-                access_token: page.access_token,
-                refresh_token: refreshData.access_token,
+                access_token: encrypt(page.access_token),
+                refresh_token: encrypt(refreshData.access_token),
                 token_expires_at: tokenExpiresAt,
                 status: 'active',
                 updated_at: new Date().toISOString(),

@@ -11,7 +11,7 @@ export default function ConfidentialitePage() {
   return (
     <article className="mx-auto max-w-3xl px-6 py-24">
       <nav aria-label="Fil d’Ariane" className="mb-8 text-sm text-zinc-500">
-        <Link href="/" className="transition-colors hover:text-emerald-400">
+        <Link href="/" className="transition-colors hover:text-[#E8856C]">
           Accueil
         </Link>
         <span className="mx-2 text-zinc-600">&gt;</span>
@@ -23,7 +23,7 @@ export default function ConfidentialitePage() {
           Politique de confidentialité
         </h1>
         <p className="mt-3 text-sm text-zinc-400">
-          Dernière mise à jour : 21 février 2026
+          Dernière mise à jour : 28 février 2026
         </p>
       </header>
 
@@ -32,7 +32,7 @@ export default function ConfidentialitePage() {
         <p className="mt-4 leading-relaxed">
           Le responsable du traitement est Savly. Pour toute question relative à la protection des
           données personnelles, vous pouvez contacter Savly à l&apos;adresse{' '}
-          <a className="text-emerald-400 hover:underline" href="mailto:contact@savly.com">
+          <a className="text-[#E8856C] hover:underline" href="mailto:contact@savly.com">
             contact@savly.com
           </a>
           .
@@ -41,7 +41,7 @@ export default function ConfidentialitePage() {
 
       <section className="border-b border-white/5 py-8">
         <h2 className="text-xl font-semibold text-zinc-100">2. Données collectées</h2>
-        <ul className="mt-4 list-disc space-y-3 pl-5 leading-relaxed marker:text-emerald-400">
+        <ul className="mt-4 list-disc space-y-3 pl-5 leading-relaxed marker:text-[#E8856C]">
           <li>
             <span className="font-medium text-zinc-100">Données de compte :</span> nom, email, mot
             de passe (hashé par Supabase).
@@ -70,7 +70,41 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="border-b border-white/5 py-8">
-        <h2 className="text-xl font-semibold text-zinc-100">3. Finalités et bases légales</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">3. Utilisation des données Google</h2>
+        <p className="mt-4 leading-relaxed">
+          Lorsque vous connectez votre compte Gmail à Savly, notre application accède aux données
+          suivantes via l&apos;API Google :
+        </p>
+        <ul className="mt-4 list-disc space-y-3 pl-5 leading-relaxed marker:text-[#E8856C]">
+          <li>
+            Lecture de vos emails (scope gmail.readonly ou gmail.modify) afin de créer
+            automatiquement des tickets de support à partir des messages entrants.
+          </li>
+          <li>
+            Envoi d&apos;emails en votre nom (scope gmail.send) afin de permettre à Savly de répondre
+            aux tickets directement depuis votre adresse @gmail.com.
+          </li>
+        </ul>
+        <p className="mt-4 leading-relaxed">
+          Ces données sont utilisées exclusivement pour fournir le service de gestion automatisée du
+          SAV. Savly ne partage pas, ne revend pas et n&apos;utilise pas vos données Gmail à
+          d&apos;autres fins, y compris la publicité. Les tokens d&apos;accès Gmail sont stockés de
+          manière chiffrée et peuvent être révoqués à tout moment depuis la page Paramètres &gt;
+          Intégrations de votre espace Savly, ou directement depuis{' '}
+          <a
+            className="text-[#E8856C] hover:underline"
+            href="https://myaccount.google.com/permissions"
+            target="_blank"
+            rel="noreferrer"
+          >
+            https://myaccount.google.com/permissions
+          </a>
+          .
+        </p>
+      </section>
+
+      <section className="border-b border-white/5 py-8">
+        <h2 className="text-xl font-semibold text-zinc-100">4. Finalités et bases légales</h2>
         <div className="mt-4 overflow-x-auto rounded-xl border border-white/10">
           <table className="min-w-full divide-y divide-white/10 text-sm">
             <thead className="bg-white/5 text-zinc-100">
@@ -106,7 +140,7 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="border-b border-white/5 py-8">
-        <h2 className="text-xl font-semibold text-zinc-100">4. Sous-traitants</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">5. Sous-traitants</h2>
         <div className="mt-4 overflow-x-auto rounded-xl border border-white/10">
           <table className="min-w-full divide-y divide-white/10 text-sm">
             <thead className="bg-white/5 text-zinc-100">
@@ -148,8 +182,8 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="border-b border-white/5 py-8">
-        <h2 className="text-xl font-semibold text-zinc-100">5. Durée de conservation</h2>
-        <ul className="mt-4 list-disc space-y-3 pl-5 leading-relaxed marker:text-emerald-400">
+        <h2 className="text-xl font-semibold text-zinc-100">6. Durée de conservation</h2>
+        <ul className="mt-4 list-disc space-y-3 pl-5 leading-relaxed marker:text-[#E8856C]">
           <li>Données de compte : durée de l&apos;abonnement + 3 ans (prescription légale).</li>
           <li>Données clients SAV : durée de l&apos;abonnement.</li>
           <li>Logs techniques : 12 mois.</li>
@@ -157,10 +191,10 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="border-b border-white/5 py-8">
-        <h2 className="text-xl font-semibold text-zinc-100">6. Droits des personnes</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">7. Droits des personnes</h2>
         <p className="mt-4 leading-relaxed">
           Vous pouvez exercer vos droits via{' '}
-          <a className="text-emerald-400 hover:underline" href="mailto:contact@savly.com">
+          <a className="text-[#E8856C] hover:underline" href="mailto:contact@savly.com">
             contact@savly.com
           </a>{' '}
           : accès, rectification, effacement, portabilité et opposition.
@@ -168,7 +202,7 @@ export default function ConfidentialitePage() {
         <p className="mt-3 leading-relaxed">
           Vous disposez également du droit d&apos;introduire une réclamation auprès de la CNIL :{' '}
           <a
-            className="text-emerald-400 hover:underline"
+            className="text-[#E8856C] hover:underline"
             href="https://www.cnil.fr"
             target="_blank"
             rel="noreferrer"
@@ -180,7 +214,7 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="border-b border-white/5 py-8">
-        <h2 className="text-xl font-semibold text-zinc-100">7. Transferts hors UE</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">8. Transferts hors UE</h2>
         <p className="mt-4 leading-relaxed">
           Certains sous-traitants utilisés par Savly (OpenAI, Vercel, Stripe, Google) sont situés aux
           États-Unis. Les transferts de données hors Union européenne sont encadrés par des clauses
@@ -189,10 +223,10 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="border-b border-white/5 py-8">
-        <h2 className="text-xl font-semibold text-zinc-100">8. Cookies</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">9. Cookies</h2>
         <p className="mt-4 leading-relaxed">
           Pour en savoir plus sur les traceurs utilisés, consultez notre{' '}
-          <Link className="text-emerald-400 hover:underline" href="/cookies">
+          <Link className="text-[#E8856C] hover:underline" href="/cookies">
             Politique de cookies
           </Link>
           .
@@ -200,7 +234,7 @@ export default function ConfidentialitePage() {
       </section>
 
       <section className="py-8">
-        <h2 className="text-xl font-semibold text-zinc-100">9. Modifications</h2>
+        <h2 className="text-xl font-semibold text-zinc-100">10. Modifications</h2>
         <p className="mt-4 leading-relaxed">
           La présente politique peut évoluer. Toute modification importante sera notifiée par email ou
           via un bandeau d&apos;information sur le site.

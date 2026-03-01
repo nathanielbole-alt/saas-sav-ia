@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { checkFeatureAccess } from '@/lib/feature-gate'
+import { encrypt } from '@/lib/encryption'
 import crypto from 'crypto'
 
 const PROVIDER_TIMEOUT_MS = 10_000
@@ -126,13 +127,11 @@ export async function GET(request: NextRequest) {
     )
 
     if (!tokenResponse.ok) {
-      const details = await tokenResponse.text()
-      const looksLikeTokenError = /(expired|invalid|denied|revoked|code)/i.test(details)
-      console.error('Shopify token exchange failed:', details)
+      console.error('Shopify token exchange failed — HTTP', tokenResponse.status)
+      const looksLikeTokenError = tokenResponse.status === 400 || tokenResponse.status === 401
       return redirectTo(
         request,
-        `/dashboard/settings?shopify=error&message=${
-          looksLikeTokenError ? 'token_invalid' : 'token_exchange_failed'
+        `/dashboard/settings?shopify=error&message=${looksLikeTokenError ? 'token_invalid' : 'token_exchange_failed'
         }`
       )
     }
@@ -192,7 +191,7 @@ export async function GET(request: NextRequest) {
           organization_id: orgId,
           provider: 'shopify',
           status: 'active',
-          access_token: accessToken,
+          access_token: encrypt(accessToken),
           refresh_token: null,
           token_expires_at: null,
           metadata: { shop, scope: tokenData.scope ?? null },

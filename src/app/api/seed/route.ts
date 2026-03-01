@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { mockTickets } from '@/lib/mock-data'
 
-export async function GET() {
+export async function POST() {
     if (process.env.NODE_ENV === 'production') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }

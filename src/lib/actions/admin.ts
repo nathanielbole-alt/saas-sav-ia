@@ -213,6 +213,8 @@ async function requireOwnerRole(): Promise<{ userId: string; orgId: string }> {
 // ---------------------------------------------------------------------------
 
 export async function getAdminDashboardData(): Promise<AdminDashboardData> {
+  await requireOwnerRole()
+
   const ago24h = daysAgo(1)
   const ago7d = daysAgo(7)
   const ago30d = daysAgo(30)
@@ -497,6 +499,8 @@ export async function generateImpersonationLink(
 export async function getOrgDetail(
   orgId: string
 ): Promise<OrgDetailData | null> {
+  await requireOwnerRole()
+
   const [orgResult, usersResult, ticketsResult, integrationsResult, customerCountResult, openCountResult, resolvedCountResult] =
     await Promise.all([
       supabaseAdmin

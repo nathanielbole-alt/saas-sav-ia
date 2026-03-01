@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "stripe:setup": "node --experimental-strip-types scripts/setup-stripe.ts",
@@ -28,6 +28,7 @@
     "openai": "^6.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "recharts": "^3.7.0",
     "stripe": "^20.3.1",
     "superjson": "^2.2.6",
     "tailwind-merge": "^3.4.0",

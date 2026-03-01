@@ -23,7 +23,6 @@ export type InvitationWithInviter = {
   email: string
   role: 'owner' | 'admin' | 'agent'
   status: 'pending' | 'accepted' | 'expired' | 'revoked'
-  token: string
   expires_at: string
   created_at: string
   inviter_name: string | null
@@ -67,7 +66,7 @@ const sendInvitationSchema = z.object({
 export async function sendInvitation(
   email: string,
   role: 'admin' | 'agent'
-): Promise<{ success: boolean; token?: string; error?: string }> {
+): Promise<{ success: boolean; invitationId?: string; error?: string }> {
   const parsed = sendInvitationSchema.safeParse({ email, role })
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message ?? 'Donnees invalides' }
@@ -139,17 +138,17 @@ export async function sendInvitation(
       role: parsed.data.role,
       invited_by: profile.id,
     })
-    .select('token')
+    .select('id')
     .single()
 
   if (error) {
     return { success: false, error: error.message }
   }
 
-  const inv = invitation as { token: string }
+  const inv = invitation as { id: string }
 
   revalidatePath('/dashboard/settings')
-  return { success: true, token: inv.token }
+  return { success: true, invitationId: inv.id }
 }
 
 // ---------------------------------------------------------------------------
@@ -159,10 +158,11 @@ export async function sendInvitation(
 export async function getInvitations(): Promise<InvitationWithInviter[]> {
   const profile = await getAuthProfile()
   if (!profile) return []
+  if (profile.role !== 'owner' && profile.role !== 'admin') return []
 
   const { data: invitations } = await supabaseAdmin
     .from('invitations')
-    .select('id, email, role, status, token, expires_at, created_at, invited_by')
+    .select('id, email, role, status, expires_at, created_at, invited_by')
     .eq('organization_id', profile.organization_id)
     .order('created_at', { ascending: false })
 
@@ -173,7 +173,6 @@ export async function getInvitations(): Promise<InvitationWithInviter[]> {
     email: string
     role: 'owner' | 'admin' | 'agent'
     status: 'pending' | 'accepted' | 'expired' | 'revoked'
-    token: string
     expires_at: string
     created_at: string
     invited_by: string
@@ -195,11 +194,49 @@ export async function getInvitations(): Promise<InvitationWithInviter[]> {
     email: inv.email,
     role: inv.role,
     status: inv.status,
-    token: inv.token,
     expires_at: inv.expires_at,
     created_at: inv.created_at,
     inviter_name: inviterMap.get(inv.invited_by) ?? null,
   }))
+}
+
+const invitationIdSchema = z.string().uuid()
+
+export async function getInvitationLink(
+  invitationId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const parsed = invitationIdSchema.safeParse(invitationId)
+  if (!parsed.success) {
+    return { success: false, error: 'Invitation invalide' }
+  }
+
+  const profile = await getAuthProfile()
+  if (!profile) return { success: false, error: 'Non authentifie' }
+  if (profile.role !== 'owner' && profile.role !== 'admin') {
+    return { success: false, error: 'Permissions insuffisantes' }
+  }
+
+  const { data: invitation, error } = await supabaseAdmin
+    .from('invitations')
+    .select('token')
+    .eq('id', parsed.data)
+    .eq('organization_id', profile.organization_id)
+    .eq('status', 'pending')
+    .single()
+
+  if (error || !invitation) {
+    return { success: false, error: 'Invitation introuvable' }
+  }
+
+  const origin =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXTAUTH_URL ??
+    'http://localhost:3000'
+
+  return {
+    success: true,
+    url: `${origin.replace(/\/$/, '')}/invite/${(invitation as { token: string }).token}`,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -318,6 +355,7 @@ export async function acceptInvitation(
 export async function getTeamMembers(): Promise<TeamMember[]> {
   const profile = await getAuthProfile()
   if (!profile) return []
+  if (profile.role !== 'owner' && profile.role !== 'admin') return []
 
   const { data: members } = await supabaseAdmin
     .from('profiles')

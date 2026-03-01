@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { google } from 'googleapis'
 import { createClient } from '@/lib/supabase/server'
 import { checkFeatureAccess } from '@/lib/feature-gate'
+import { encrypt } from '@/lib/encryption'
 import crypto from 'crypto'
 
 const PROVIDER_TIMEOUT_MS = 10_000
@@ -143,8 +144,10 @@ export async function GET(request: NextRequest) {
           organization_id: p.organization_id,
           provider: 'gmail',
           status: 'active',
-          access_token: tokens.access_token ?? null,
-          refresh_token: tokens.refresh_token ?? null,
+          access_token: tokens.access_token ? encrypt(tokens.access_token) : null,
+          refresh_token: tokens.refresh_token
+            ? encrypt(tokens.refresh_token)
+            : null,
           token_expires_at: tokens.expiry_date
             ? new Date(tokens.expiry_date).toISOString()
             : null,

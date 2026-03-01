@@ -1,27 +1,15 @@
-import type { Metadata } from "next";
-import { Space_Grotesk, DM_Sans, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { TRPCProvider } from "@/lib/trpc/Provider";
+import type { CSSProperties, ReactNode } from 'react'
+import type { Metadata, Viewport } from 'next'
+import './globals.css'
+import { TRPCProvider } from '@/lib/trpc/Provider'
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
+const fontVariables = {
+  '--font-space-grotesk':
+    '"Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif',
+  '--font-dm-sans': '"Avenir", "Segoe UI", "Helvetica Neue", sans-serif',
+  '--font-geist-mono':
+    '"SFMono-Regular", "Cascadia Code", "Menlo", monospace',
+} as CSSProperties
 
 export const metadata: Metadata = {
   title: "Savly — Votre SAV, boosté par l'IA",
@@ -33,24 +21,22 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Savly',
   },
-};
+}
 
-export const viewport = {
+export const viewport: Viewport = {
   themeColor: '#050505',
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode
 }>) {
   return (
     <html lang="fr">
-      <body
-        className={`${spaceGrotesk.variable} ${dmSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased" style={fontVariables}>
         <TRPCProvider>{children}</TRPCProvider>
       </body>
     </html>
-  );
+  )
 }

@@ -1,36 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
-import { getTickets } from '@/lib/actions/tickets'
-import DashboardClient from './client-page'
-import type { MockTicket } from '@/lib/mock-data'
+import { getTicketsList } from '@/lib/actions/tickets'
+import OverviewClient from './overview-client'
 
-export default async function DashboardPage(props: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
-}) {
-  const searchParams = await props.searchParams
+export default async function DashboardOverviewPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const tickets: MockTicket[] = await getTickets()
+  const tickets = await getTicketsList()
+
   const { data: profile } = user
     ? await supabase
       .from('profiles')
-      .select('organization_id')
+      .select('full_name, organization_id')
       .eq('id', user.id)
       .maybeSingle()
     : { data: null }
 
-  const organizationId =
-    (profile as { organization_id: string } | null)?.organization_id ?? null
-
-  const ticketParam = searchParams?.ticket
-  const initialSelectedId =
-    typeof ticketParam === 'string' ? ticketParam : ticketParam?.[0] ?? null
-
   return (
-    <DashboardClient
-      initialTickets={tickets}
-      organizationId={organizationId}
-      currentUserId={user?.id ?? null}
-      initialSelectedId={initialSelectedId}
+    <OverviewClient
+      tickets={tickets}
+      userName={profile?.full_name ?? user?.email}
     />
   )
 }

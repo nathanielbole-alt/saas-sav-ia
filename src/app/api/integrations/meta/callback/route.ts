@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { checkFeatureAccess } from '@/lib/feature-gate'
+import { encrypt } from '@/lib/encryption'
 import crypto from 'crypto'
 
 const GRAPH_API = 'https://graph.facebook.com/v21.0'
@@ -136,8 +137,7 @@ export async function GET(request: NextRequest) {
 
     const tokenRes = await fetchWithTimeout(tokenUrl.toString())
     if (!tokenRes.ok) {
-      const details = await tokenRes.text()
-      console.error('Meta token exchange failed:', details)
+      console.error('Meta token exchange failed — HTTP', tokenRes.status)
       return redirectTo(request, '/dashboard/settings?meta=error&reason=token_invalid')
     }
 
@@ -162,8 +162,7 @@ export async function GET(request: NextRequest) {
       `${GRAPH_API}/me/accounts?access_token=${userAccessToken}&fields=id,name,access_token`
     )
     if (!pagesRes.ok) {
-      const details = await pagesRes.text()
-      console.error('Meta pages fetch failed:', details)
+      console.error('Meta pages fetch failed — HTTP', pagesRes.status)
       return redirectTo(request, '/dashboard/settings?meta=error&reason=provider_error')
     }
 
@@ -210,8 +209,8 @@ export async function GET(request: NextRequest) {
           organization_id: p.organization_id,
           provider: 'meta',
           status: 'active',
-          access_token: page.access_token,
-          refresh_token: userAccessToken,
+          access_token: encrypt(page.access_token),
+          refresh_token: encrypt(userAccessToken),
           token_expires_at: tokenExpiresAt,
           email: null,
           metadata: {

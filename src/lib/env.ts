@@ -41,9 +41,10 @@ const envSchema = z.object({
   // Auth
   NEXTAUTH_SECRET: z.string().min(32),
   NEXTAUTH_URL: z.string().url(),
+  ENCRYPTION_KEY: z.string().regex(/^[0-9a-fA-F]{64}$/, 'ENCRYPTION_KEY must be 32 bytes hex'),
 
-  // Cron
-  CRON_SECRET: z.string().min(1).optional(),
+  // Cron — required: a missing secret would cause a fail-open in the cron auth guard
+  CRON_SECRET: z.string().min(32),
 
   // Node
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -73,6 +74,7 @@ const envParse = envSchema.safeParse({
   META_WEBHOOK_VERIFY_TOKEN: process.env.META_WEBHOOK_VERIFY_TOKEN,
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   CRON_SECRET: process.env.CRON_SECRET,
   NODE_ENV: process.env.NODE_ENV,
 })

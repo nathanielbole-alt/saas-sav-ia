@@ -3,6 +3,7 @@ import { google } from 'googleapis'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { checkFeatureAccess } from '@/lib/feature-gate'
 import { triggerAutoReply } from '@/lib/ai/auto-reply'
+import { decrypt, encrypt } from '@/lib/encryption'
 import type { Integration } from '@/types/database.types'
 
 export const runtime = 'nodejs'
@@ -22,21 +23,27 @@ function getOAuth2Client() {
 
 async function getAuthedClient(integration: Integration) {
   const oauth2Client = getOAuth2Client()
+  const accessToken = integration.access_token
+    ? decrypt(integration.access_token)
+    : undefined
+  const refreshToken = integration.refresh_token
+    ? decrypt(integration.refresh_token)
+    : undefined
 
   oauth2Client.setCredentials({
-    access_token: integration.access_token,
-    refresh_token: integration.refresh_token,
+    access_token: accessToken,
+    refresh_token: refreshToken,
     expiry_date: integration.token_expires_at
       ? new Date(integration.token_expires_at).getTime()
       : undefined,
   })
 
   const tokenInfo = await oauth2Client.getAccessToken()
-  if (tokenInfo.token && tokenInfo.token !== integration.access_token) {
+  if (tokenInfo.token && tokenInfo.token !== accessToken) {
     await supabaseAdmin
       .from('integrations')
       .update({
-        access_token: tokenInfo.token,
+        access_token: encrypt(tokenInfo.token),
         token_expires_at: oauth2Client.credentials.expiry_date
           ? new Date(oauth2Client.credentials.expiry_date).toISOString()
           : null,
@@ -190,9 +197,14 @@ async function syncOrgGmail(integration: Integration): Promise<{
 // ---------------------------------------------------------------------------
 
 export async function GET(request: Request) {
-  // Verify cron secret
+  // Verify cron secret — fail-closed: reject immediately if secret is not configured
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    console.error('CRON_SECRET is not configured — rejecting cron request')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

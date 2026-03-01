@@ -90,6 +90,9 @@ function mapTicketRow(raw: TicketWithRelations): MockTicket {
       .filter((name): name is string => Boolean(name)),
     csatRating: (raw as Record<string, unknown>).csat_rating as number | null ?? null,
     createdAt: raw.created_at,
+    lastMessagePreview: lastMessage?.body ?? null,
+    lastMessageAt: lastMessage?.createdAt ?? null,
+    lastMessageSenderType: lastMessage?.senderType ?? null,
     messages,
   }
 }
@@ -139,6 +142,9 @@ export function useRealtimeTickets(
           ...targetTicket,
           unread:
             incomingMessage.senderType === 'agent' ? targetTicket.unread : true,
+          lastMessagePreview: incomingMessage.body,
+          lastMessageAt: incomingMessage.createdAt,
+          lastMessageSenderType: incomingMessage.senderType,
           messages: [...messagesWithoutTempDuplicate, incomingMessage].sort(
             (a, b) => toTimestamp(a.createdAt) - toTimestamp(b.createdAt)
           ),
