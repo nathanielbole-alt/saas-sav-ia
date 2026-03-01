@@ -27,6 +27,9 @@ saas-sav-ia/
 │   │   ├── signup/
 │   │   │   ├── page.tsx                  # Page inscription (Server Component)
 │   │   │   └── signup-form.tsx           # Formulaire inscription complet (nom, email, mdp, confirmation)
+│   │   ├── pricing/
+│   │   │   ├── page.tsx                  # Page pricing standalone (Server Component)
+│   │   │   └── pricing-client.tsx        # Cards Pro/Business/Enterprise + toggle mensuel/annuel (-20%)
 │   │   ├── (legal)/
 │   │   │   ├── confidentialite/page.tsx   # Politique de confidentialité (RGPD + Google OAuth)
 │   │   │   ├── cookies/page.tsx          # Politique cookies
@@ -54,9 +57,15 @@ saas-sav-ia/
 │   │   │   │   └── onboarding-client.tsx # Wizard 5 étapes (profil, canaux, politiques SAV)
 │   │   │   └── settings/
 │   │   │       ├── page.tsx              # Settings (Server Component, role-gated data)
-│   │   │       ├── settings-client.tsx   # Profil, org, politiques SAV, intégrations
+│   │   │       ├── settings-client.tsx   # Orchestrateur sections settings (linear-style)
 │   │   │       └── components/
-│   │   │           └── team-section.tsx   # Section équipe + invitations (token-free)
+│   │   │           ├── profile-section.tsx        # Profil : nom, email (read-only), rôle
+│   │   │           ├── organization-section.tsx   # Organisation : nom, plan badge, re-onboarding
+│   │   │           ├── premium-features-section.tsx # Tabs : Branding, Manager, SLA, SSO (feature-gated)
+│   │   │           ├── policies-section.tsx       # Politiques SAV : textarea 5000 chars (owner/admin)
+│   │   │           ├── integrations-section.tsx   # Gmail, Shopify, Meta : connect/disconnect
+│   │   │           ├── team-section.tsx           # Équipe : membres, invitations (token-free)
+│   │   │           └── developer-section.tsx      # API key + webhook URL (stub, bêta)
 │   │   └── api/
 │   │       ├── ai/auto-reply/route.ts          # Auto-reply IA (30s delay, re-check, admin call)
 │   │       ├── auth/callback/route.ts          # Callback OAuth Supabase
@@ -68,6 +77,7 @@ saas-sav-ia/
 │   │       ├── integrations/meta/route.ts      # OAuth Meta → redirect Facebook
 │   │       ├── integrations/meta/callback/route.ts   # Callback Meta → encrypt + save tokens
 │   │       ├── webhooks/meta/route.ts          # Webhook Meta (Instagram DM + Messenger)
+│   │       ├── trpc/[trpc]/route.ts            # Route handler tRPC (GET + POST)
 │   │       ├── seed/route.ts                   # Seeder mock data
 │   │       └── stripe/webhook/route.ts         # Webhook Stripe (subscription lifecycle)
 │   ├── components/
@@ -92,26 +102,34 @@ saas-sav-ia/
 │   │   │   └── auto-reply.ts             # triggerAutoReply() — fire-and-forget POST vers /api/ai/auto-reply
 │   │   ├── actions/
 │   │   │   ├── ai.ts                     # generateAIResponse() + generateAIResponseAdmin() + escalade [ESCALADE_HUMAIN]
+│   │   │   ├── admin.ts                  # getAdminDashboardData(), adminChangePlan(), generateImpersonationLink() — owner only
 │   │   │   ├── billing.ts               # createCheckoutSession(), createPortalSession(), getSubscriptionInfo()
-│   │   │   ├── tickets.ts               # getTickets(), getTicketsList(), getTicketMessages(), sendMessage()
-│   │   │   ├── notifications.ts         # getUnreadNotifications(), markNotificationRead()
+│   │   │   ├── branding.ts              # updateBranding() — logo, accent color, email footer (Business+)
 │   │   │   ├── customers.ts             # CRUD customers
 │   │   │   ├── analytics.ts             # Stats dashboard
+│   │   │   ├── feedback.ts              # submitTicketFeedback() — CSAT étoiles + commentaire
 │   │   │   ├── gmail.ts                 # syncGmailMessages() (role-gated) + sendGmailReply()
-│   │   │   ├── meta.ts                  # sendMetaReply() + refreshMetaPageToken()
-│   │   │   ├── shopify.ts               # syncShopifyCustomers(), syncShopifyOrders() (role-gated)
 │   │   │   ├── integrations.ts          # getIntegrations(), disconnectIntegration()
 │   │   │   ├── invitations.ts           # sendInvitation(), getInvitations() (role-gated), getInvitationLink(), revokeInvitation(), acceptInvitation(), getTeamMembers() (role-gated), removeTeamMember()
+│   │   │   ├── meta.ts                  # sendMetaReply() + refreshMetaPageToken()
+│   │   │   ├── notifications.ts         # getUnreadNotifications(), markNotificationRead()
 │   │   │   ├── onboarding.ts            # completeOnboardingStep2(), saveOnboardingPolicies(), completeOnboarding(), resetOnboarding()
-│   │   │   └── settings.ts              # updateProfile(), updateOrganization(), updateCompanyPolicies()
+│   │   │   ├── settings.ts              # updateProfile(), updateOrganization(), updateCompanyPolicies()
+│   │   │   ├── shopify.ts               # syncShopifyCustomers(), syncShopifyOrders() (role-gated)
+│   │   │   ├── sso.ts                   # configureSso() — SAML provider config (Enterprise only)
+│   │   │   └── tickets.ts               # getTickets(), getTicketsList(), getTicketMessages(), sendMessage()
+│   │   ├── trpc/
+│   │   │   ├── Provider.tsx             # React Query + tRPC provider (QueryClient + httpBatchLink)
+│   │   │   └── client.ts                # tRPC client server-side (sans hooks React)
 │   │   ├── encryption.ts                 # AES-256-GCM encrypt/decrypt pour tokens OAuth
-│   │   ├── plans.ts                      # Définitions plans (client-safe) : Pro/Business/Enterprise + limites
-│   │   ├── stripe.ts                     # Stripe SDK server + getPlanFromPriceId() + getPriceIdForPlan()
-│   │   ├── feature-gate.ts               # getOrgPlan(), getOrgUsage(), checkFeatureAccess(), enforceFeatureAccess()
-│   │   ├── stripe-client.ts              # Stripe SDK client (loadStripe)
 │   │   ├── env.ts                        # Validation Zod des env vars
-│   │   ├── rate-limit.ts                 # In-memory rate limiter
+│   │   ├── feature-gate.ts               # getOrgPlan(), getOrgUsage(), checkFeatureAccess(), enforceFeatureAccess()
+│   │   ├── logger.ts                     # Structured logging : logger.info/warn/error + intégration Sentry
 │   │   ├── mock-data.ts                  # Types MockTicket, MockMessage, MockCustomer
+│   │   ├── plans.ts                      # Définitions plans (client-safe) : Pro/Business/Enterprise + limites
+│   │   ├── rate-limit.ts                 # Rate limiter distribué (table DB rate_limits)
+│   │   ├── stripe-client.ts              # Stripe SDK client (loadStripe)
+│   │   ├── stripe.ts                     # Stripe SDK server + getPlanFromPriceId() + getPriceIdForPlan()
 │   │   ├── utils.ts                      # cn() helper
 │   │   └── supabase/
 │   │       ├── client.ts                 # createBrowserClient
@@ -119,7 +137,7 @@ saas-sav-ia/
 │   │       ├── admin.ts                  # supabaseAdmin (Service Role Key)
 │   │       └── middleware.ts             # Client middleware (matcher inclut /signup)
 │   └── types/
-│       └── database.types.ts             # Types Supabase (9 tables + helpers, incl. notifications)
+│       └── database.types.ts             # Types Supabase (11 tables + helpers)
 ├── scripts/
 │   ├── setup-stripe.ts                   # Crée produits/prix Stripe + écrit .env.local
 │   ├── set-enterprise.mjs               # Met à jour le plan org → enterprise en DB
@@ -129,6 +147,7 @@ saas-sav-ia/
 │   ├── 00001_initial_schema.sql          # 7 tables, 5 enums, indexes, triggers, RLS
 │   ├── 00002_auth_trigger_rls.sql        # Auto-profil + RLS policies
 │   ├── 00003_integrations.sql            # Table integrations (tokens chiffrés AES-256-GCM)
+│   ├── 00004_security_fixes.sql          # RLS hardening supplémentaire
 │   ├── 00005_notifications.sql           # Table notifications + RLS + indexes
 │   ├── 00006_enable_realtime.sql         # Active Realtime sur messages, tickets, notifications
 │   ├── 00007_add_business_plan.sql       # Ajout 'business' + 'enterprise' à la contrainte plan
@@ -138,7 +157,11 @@ saas-sav-ia/
 │   ├── 00011_onboarding.sql              # Colonnes onboarding (profiles.is_onboarded, industry)
 │   ├── 00012_company_policies.sql        # Colonnes organizations.refund_policy + organizations.sav_policy
 │   ├── 00013_onboarding_enrichment.sql   # Colonnes profiles.team_size + profiles.ticket_volume
-│   └── 00014_user_invitations.sql        # Table invitations + RLS
+│   ├── 00014_user_invitations.sql        # Table invitations + RLS
+│   ├── 00015_ticket_feedback.sql         # Colonnes tickets.csat_rating, csat_comment, csat_at
+│   ├── 00016_hardening_policies_and_distributed_rate_limit.sql  # RLS notifs/invitations + table rate_limits + check_rate_limit()
+│   ├── 20260224_custom_branding.sql      # Colonnes organizations.brand_logo_url, brand_accent_color, brand_email_footer
+│   └── 20260224_sso_settings.sql         # Colonnes organizations.sso_enabled, sso_provider, sso_idp_metadata_url, sso_connection_id
 └── .env.local                            # Secrets (GITIGNORED)
 ```
 
@@ -350,9 +373,9 @@ saas-sav-ia/
   - Utilise `supabaseAdmin` pour les vérifications server-side
   - Fallback plan = 'pro' (plus de plan free)
 - ✅ **Limites par plan** (définis dans `plans.ts`) :
-  - Pro : tickets illimités, 100 IA/jour, intégrations illimitées, 5 utilisateurs
-  - Business : tickets illimités, 500 IA/jour, intégrations illimitées, utilisateurs illimités
-  - Enterprise : tout illimité (IA, tickets, intégrations, utilisateurs)
+  - Pro : tickets illimités, **50 IA/jour**, intégrations illimitées, 5 utilisateurs
+  - Business : tickets illimités, **250 IA/jour**, intégrations illimitées, utilisateurs illimités
+  - Enterprise : tickets illimités, **750 IA/jour**, intégrations illimitées, utilisateurs illimités
 - ✅ **Enforcement points** :
   - IA : `enforceAiRateLimit()` dans `ai.ts` — lit le plan pour déterminer le max
   - Tickets : check dans `tickets.create` (tRPC), `syncShopifyOrders()`, `syncGmailMessages()`
@@ -368,6 +391,54 @@ saas-sav-ia/
 - ✅ UI Settings : carte Meta avec connect/disconnect
 - ✅ Migration `00010_add_social_channels.sql` : enum `instagram`/`messenger` + `metadata` JSONB
 
+### Custom Branding & SSO Enterprise (01/03/2026)
+- ✅ **Custom Branding** (Business+) — migration `20260224_custom_branding.sql`
+  - Colonnes `organizations` : `brand_logo_url`, `brand_accent_color` (default `#E8856C`), `brand_email_footer` (max 200 chars)
+  - Server Action `updateBranding()` : role-gated owner/admin, validation Zod
+  - UI Settings > "Fonctionnalités Premium" > onglet "Branding" : upload logo, color picker, textarea footer
+- ✅ **SSO / SAML** (Enterprise only) — migration `20260224_sso_settings.sql`
+  - Colonnes `organizations` : `sso_enabled`, `sso_provider` (google|okta|microsoft|custom), `sso_idp_metadata_url`, `sso_connection_id`
+  - Server Action `configureSso()` : vérifie plan enterprise avant toute modification
+  - UI Settings > "Fonctionnalités Premium" > onglet "SSO" : provider dropdown, metadata URL, ACS + SP Entity ID (copy-paste)
+- ✅ **SLA** (Enterprise) — onglet statique : 99.9% uptime, <4h incident SLO, fenêtre maintenance
+- ✅ **Manager** (Business+) — onglet statique : contact account manager
+
+### Admin Dashboard (01/03/2026)
+- ✅ Server Action `getAdminDashboardData()` — owner uniquement
+  - KPIs : MRR, total orgs/users, tickets (24h/7j/30j), requêtes IA, coût estimé ($0.0004/msg), intégrations, tickets ouverts/résolus
+  - Distributions : par plan, par canal
+  - Timelines : volume inscriptions + volume tickets
+- ✅ `adminChangePlan(orgId, plan)` — modification plan d'une org
+- ✅ `adminSetSubscriptionStatus(orgId, status)` — modification statut abonnement
+- ✅ `generateImpersonationLink(email)` — magic link d'impersonation
+- ✅ `getOrgDetail(orgId)` — détail complet : users, tickets, intégrations, stats
+
+### Rate Limiting Distribué (01/03/2026)
+- ✅ Migration `00016_hardening_policies_and_distributed_rate_limit.sql`
+  - Table `rate_limits` en DB (remplace l'in-memory rate limiter)
+  - Fonction SQL `check_rate_limit(identifier, window_seconds, max_requests)` — atomic upsert
+  - RLS durcie sur `notifications` et `invitations` (owner/admin only)
+- ✅ `rate-limit.ts` mis à jour pour utiliser le rate limiter distribué
+
+### Page Pricing Standalone
+- ✅ Route `/pricing` avec `page.tsx` (Server Component) + `pricing-client.tsx`
+  - Cards Pro/Business/Enterprise avec toggle mensuel/annuel (-20%)
+  - CTA : connecté → Stripe Checkout, déconnecté → `/signup?plan=X`
+
+### Setup tRPC
+- ✅ `src/lib/trpc/Provider.tsx` : QueryClient + tRPC provider (httpBatchLink + superjson)
+- ✅ `src/lib/trpc/client.ts` : client server-side
+- ✅ `src/app/api/trpc/[trpc]/route.ts` : route handler (GET + POST)
+
+### Logging structuré
+- ✅ `src/lib/logger.ts` : `logger.info/warn/error` avec timestamp
+  - Dev : console avec timestamp
+  - Prod : JSON + capture Sentry si disponible
+
+### Settings refactorisées en composants
+- ✅ `settings-client.tsx` orchestrateur linéaire → délègue à 7 composants dédiés
+- ✅ `profile-section.tsx`, `organization-section.tsx`, `premium-features-section.tsx`, `policies-section.tsx`, `integrations-section.tsx`, `team-section.tsx`, `developer-section.tsx`
+
 ## Prochaines étapes
 
 - [ ] Google Reviews integration (en attente validation API Google Business)
@@ -380,19 +451,35 @@ saas-sav-ia/
 
 ## Base de données
 
-### Tables (9)
+### Tables (11)
 | Table | Description |
 |-------|-------------|
-| `organizations` | Tenants (plan, subscription_status, refund_policy, sav_policy) |
-| `profiles` | Utilisateurs agents SAV (is_onboarded, industry) |
+| `organizations` | Tenants (plan, subscription_status, refund_policy, sav_policy, branding, sso) |
+| `profiles` | Utilisateurs agents SAV (is_onboarded, industry, team_size, ticket_volume) |
 | `customers` | Clients finaux (metadata JSONB = données Shopify) |
-| `tickets` | Demandes SAV (status, priority, channel) |
+| `tickets` | Demandes SAV (status, priority, channel, csat_rating, csat_comment, csat_at) |
 | `messages` | Messages (sender_type: customer/agent/ai) |
 | `tags` | Tags de catégorisation |
 | `ticket_tags` | Relation N:N tickets ↔ tags |
 | `notifications` | Alertes escalade IA → humain (type, title, body, read) |
 | `integrations` | Gmail, Shopify, Stripe, Meta (tokens chiffrés AES-256-GCM, status) |
 | `invitations` | Invitations d'équipe (email, role, token, status, expires_at) |
+| `rate_limits` | Rate limiting distribué (identifier, window, count, reset_at) |
+
+### Colonnes notables sur `organizations`
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `plan` | enum | pro \| business \| enterprise |
+| `subscription_status` | enum | active \| trialing \| past_due \| canceled |
+| `refund_policy` | text | Politique remboursements (injectée dans prompt IA) |
+| `sav_policy` | text | Politique SAV générale (injectée dans prompt IA) |
+| `brand_logo_url` | text? | URL logo organisation (Branding Business+) |
+| `brand_accent_color` | text | Couleur accent (défaut #E8856C) |
+| `brand_email_footer` | text? | Footer email custom (max 200 chars) |
+| `sso_enabled` | bool | SSO activé (Enterprise) |
+| `sso_provider` | text? | google \| okta \| microsoft \| custom |
+| `sso_idp_metadata_url` | text? | URL metadata SAML IdP |
+| `sso_connection_id` | text? | ID connexion SSO |
 
 ## Variables d'environnement
 
@@ -445,6 +532,11 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook  # Écouter webhook
 - **Inbox performance** : `getTicketsList()` charge la liste sans messages (preview only), `getTicketMessages(ticketId)` charge les messages à la demande. Les consumers (inbox/page.tsx, dashboard/page.tsx) utilisent `getTicketsList()`.
 - **Build script** : utilise Webpack (pas Turbopack) via `next build` pour stabilité. Dev utilise Turbopack via `next dev --turbopack`.
 - **Polices** : system font stack (fallback) pour build offline-compatible. Plus de dépendance `next/font/google` au build time.
+- **Rate limiting distribué** : `rate-limit.ts` utilise la table `rate_limits` en DB (via `check_rate_limit()` SQL) — persiste entre les instances serverless. Remplace l'ancien Map en mémoire.
+- **SSO** : `configureSso()` vérifie que le plan est `enterprise` avant tout upsert. L'ACS URL et SP Entity ID sont calculés à partir de `NEXTAUTH_URL`.
+- **Branding** : `updateBranding()` gère l'upload de logo via Supabase Storage (bucket `branding`). L'`accent_color` est appliqué côté client via CSS variable.
+- **Logger** : `logger.ts` wrape les `console.*` en prod avec JSON + capture Sentry. Utiliser `logger` au lieu de `console` dans tout nouveau code serveur.
+- **Admin actions** : `admin.ts` est réservé au rôle `owner` exclusivement (pas `admin`). Calcule le MRR à partir des abonnements actifs selon les prix des plans.
 
 ## Changelog landing page
 
