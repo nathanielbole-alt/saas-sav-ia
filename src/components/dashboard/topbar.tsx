@@ -25,6 +25,7 @@ const mainNav = [
     { name: 'Inbox', href: '/dashboard/inbox' },
     { name: 'Tickets', href: '/dashboard/tickets' },
     { name: 'Clients', href: '/dashboard/customers' },
+    { name: 'Automations', href: '/dashboard/automations' },
     { name: 'Analytics', href: '/dashboard/analytics' },
     { name: 'Billing', href: '/dashboard/billing' },
     { name: 'Settings', href: '/dashboard/settings' },

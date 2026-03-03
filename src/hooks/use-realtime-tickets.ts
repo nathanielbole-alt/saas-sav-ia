@@ -43,13 +43,16 @@ function mapMessageRow(
   customerName: string,
   agentDisplayName: string
 ): MockMessage {
+  const senderType: MockMessage['senderType'] =
+    message.sender_type === 'system' ? 'ai' : message.sender_type
+
   return {
     id: message.id,
-    senderType: message.sender_type,
+    senderType,
     senderName:
-      message.sender_type === 'ai'
+      senderType === 'ai'
         ? 'Savly'
-        : message.sender_type === 'agent'
+        : senderType === 'agent'
           ? agentDisplayName
           : customerName,
     body: message.body,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   TrendingUp,
@@ -309,12 +309,9 @@ function PrioritiesChart({
 
 export default function AnalyticsClient({
   analytics,
-  plan = 'pro',
 }: {
   analytics: AnalyticsData | null
-  plan?: string
 }) {
-  const isEnterprise = plan === 'enterprise'
   const router = useRouter()
   const supabase = createClient()
 
@@ -396,71 +393,16 @@ export default function AnalyticsClient({
           />
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Analytics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="lg:col-span-2">
             <TrendsChart data={analytics.ticketsOverTime} />
           </div>
           <div className="lg:col-span-1">
             <SourcesChart data={channelData} />
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <PrioritiesChart data={analytics.ticketsByPriority} reopenRate={analytics.reopenRate} />
-          </div>
-          <div className="lg:col-span-2 rounded-3xl bg-white/[0.02] border border-white/5 p-6 shadow-lg">
-            {isEnterprise ? (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0a84ff]/10 border border-[#0a84ff]/20">
-                    <Bot className="h-5 w-5 text-[#0a84ff]" />
-                  </div>
-                  <div>
-                    <h3 className="text-[16px] font-semibold text-white">Insights IA Détaillés</h3>
-                    <p className="text-[12px] text-[#86868b]">Analyse de votre support client</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-2">Taux de résolution IA</p>
-                    <p className="text-[28px] font-bold text-white">{analytics.aiResolutionRate}<span className="text-[16px] text-[#86868b]">%</span></p>
-                    <p className="text-[12px] text-[#30d158] mt-1">↑ Réponses automatiques actives</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-2">Réponses générées</p>
-                    <p className="text-[28px] font-bold text-white">{analytics.aiResponseCount}</p>
-                    <p className="text-[12px] text-[#0a84ff] mt-1">↑ Ce mois-ci</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-2">Temps moyen 1ère réponse</p>
-                    <p className="text-[28px] font-bold text-white">{formatResponseTime(analytics.avgFirstResponseMinutes)}</p>
-                    <p className="text-[12px] text-[#ffd60a] mt-1">Délai moyen de 1ère réponse</p>
-                  </div>
-                  <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] mb-2">Tickets réouverts</p>
-                    <p className="text-[28px] font-bold text-white">{analytics.reopenRate}<span className="text-[16px] text-[#86868b]">%</span></p>
-                    <p className="text-[12px] text-[#ff453a] mt-1">Taux de réouverture</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full min-h-[200px]">
-                <div className="text-center max-w-sm">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0a84ff]/10 border border-[#0a84ff]/20 mb-5">
-                    <Bot className="h-8 w-8 text-[#0a84ff]" />
-                  </div>
-                  <h3 className="text-[18px] font-semibold text-white mb-2">Insights IA Détaillés</h3>
-                  <p className="text-[14px] text-[#86868b] leading-relaxed">
-                    L&apos;analyse sémantique complète de vos conversations et les suggestions d&apos;optimisation sont disponibles dans le forfait Enterprise.
-                  </p>
-                  <button className="mt-6 rounded-full bg-white/10 px-6 py-2.5 text-[13px] font-medium text-white hover:bg-white/15 transition-colors">
-                    Gérer mon abonnement
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

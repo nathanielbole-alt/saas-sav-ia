@@ -13,6 +13,8 @@ export const PLANS = {
             '5 utilisateurs',
             'Toutes les intégrations',
             'IA avancée (50 réponses / jour)',
+            '2 automatisations',
+            'Fiche client basique',
             'Analytics détaillés',
             'Support prioritaire',
         ],
@@ -21,6 +23,7 @@ export const PLANS = {
             users: 5,
             integrations: Infinity,
             aiResponses: 50,
+            automations: 2,
         },
     },
     business: {
@@ -32,6 +35,8 @@ export const PLANS = {
             'Utilisateurs illimités',
             'API access',
             'IA avancée (250 réponses / jour)',
+            '10 automatisations',
+            'Intelligence Client 360°',
             'SLA garanti 99.9%',
             'Account manager dédié',
             'Custom branding',
@@ -41,6 +46,7 @@ export const PLANS = {
             users: Infinity,
             integrations: Infinity,
             aiResponses: 250,
+            automations: 10,
         },
     },
     enterprise: {
@@ -50,6 +56,8 @@ export const PLANS = {
         features: [
             'Tout dans Business',
             'IA avancée (750 réponses / jour)',
+            'Automatisations illimitées',
+            'IA segmentation client',
             'SLA garanti 99.9%',
             'Account manager dédié',
             'Custom branding',
@@ -61,6 +69,7 @@ export const PLANS = {
             users: Infinity,
             integrations: Infinity,
             aiResponses: 750,
+            automations: Infinity,
         },
     },
 } as const

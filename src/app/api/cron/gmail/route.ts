@@ -9,6 +9,11 @@ import type { Integration } from '@/types/database.types'
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
+type GmailHeader = {
+  name?: string | null
+  value?: string | null
+}
+
 // ---------------------------------------------------------------------------
 // Gmail OAuth helpers (mirrors gmail.ts but uses supabaseAdmin)
 // ---------------------------------------------------------------------------
@@ -55,6 +60,87 @@ async function getAuthedClient(integration: Integration) {
   return oauth2Client
 }
 
+function isNewsletter(
+  headers: GmailHeader[],
+  from: string,
+  body: string,
+  subject: string
+): boolean {
+  const normalizedFrom = from.toLowerCase()
+  const normalizedBody = body.toLowerCase()
+  const normalizedSubject = subject.toLowerCase()
+
+  const listUnsubscribe = headers.find(
+    (header) => header.name?.toLowerCase() === 'list-unsubscribe'
+  )
+  if (listUnsubscribe?.value) return true
+
+  const precedence = headers
+    .find((header) => header.name?.toLowerCase() === 'precedence')
+    ?.value?.toLowerCase()
+
+  if (precedence === 'bulk' || precedence === 'list' || precedence === 'junk') {
+    return true
+  }
+
+  const noReplyPatterns = [
+    /no[-_]?reply@/i,
+    /donotreply@/i,
+    /ne-pas-repondre@/i,
+    /notifications?@/i,
+    /newsletter@/i,
+    /marketing@/i,
+    /promo(tions?)?@/i,
+    /updates?@/i,
+    /news@/i,
+    /bounces?@/i,
+    /daemon@/i,
+    /alerts?@/i,
+    /support-robot@/i,
+    /info@.*\.(com|fr|io|net|org)$/i,
+  ]
+
+  if (noReplyPatterns.some((pattern) => pattern.test(normalizedFrom))) {
+    return true
+  }
+
+  const spammySubjects = [
+    /newsletter/i,
+    /alerte de sécurité/i,
+    /offre( exclusive)?/i,
+    /promotion/i,
+    /votre récapitulatif/i,
+    /nouveau message de/i,
+    /nouvelle connexion/i,
+  ]
+
+  if (spammySubjects.some((pattern) => pattern.test(normalizedSubject))) {
+    return true
+  }
+
+  const unsubscribePatterns = [
+    /se\s+d[ée]sinscrire/i,
+    /me\s+d[ée]sinscrire/i,
+    /unsubscribe/i,
+    /vous\s+d[ée]sabonner/i,
+    /gérer\s+vos\s+préférences/i,
+    /manage\s+preferences/i,
+    /view\s+in\s+browser/i,
+    /voir\s+dans\s+le\s+navigateur/i,
+    /ne\s+plus\s+recevoir/i,
+    /cet\s+email\s+est\s+généré\s+automatiquement/i,
+    /cet\s+e-mail\s+automatique/i,
+    /merci\s+de\s+ne\s+pas\s+répondre/i,
+    /do\s+not\s+reply/i,
+  ]
+
+  if (unsubscribePatterns.some((pattern) => pattern.test(normalizedBody))) {
+    return true
+  }
+
+  return false
+}
+
 // ---------------------------------------------------------------------------
 // Sync a single org's Gmail inbox
 // ---------------------------------------------------------------------------
@@ -77,7 +163,7 @@ async function syncOrgGmail(integration: Integration): Promise<{
   const { data: listData } = await gmail.users.messages.list({
     userId: 'me',
     maxResults: 20,
-    q: 'in:inbox is:unread',
+    q: 'in:inbox is:unread -category:promotions -category:social -category:updates -category:forums -label:unsubscribe',
   })
 
   const messages = listData.messages ?? []
@@ -92,7 +178,7 @@ async function syncOrgGmail(integration: Integration): Promise<{
       format: 'full',
     })
 
-    const headers = msg.payload?.headers ?? []
+    const headers = (msg.payload?.headers ?? []) as GmailHeader[]
     const from = headers.find((h) => h.name === 'From')?.value ?? ''
     const subject =
       headers.find((h) => h.name === 'Subject')?.value ?? '(sans sujet)'
@@ -119,6 +205,7 @@ async function syncOrgGmail(integration: Integration): Promise<{
     }
 
     if (!body.trim() || !senderEmail) continue
+    if (isNewsletter(headers, from, body, subject)) continue
 
     // Find or create customer
     const { data: existingCustomers } = await supabaseAdmin

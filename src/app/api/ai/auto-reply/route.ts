@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   const { ticketId } = parsed.data
 
-  await sleep(30_000)
+  await sleep(15_000)
 
   const { data: ticket, error: ticketError } = await supabaseAdmin
     .from('tickets')

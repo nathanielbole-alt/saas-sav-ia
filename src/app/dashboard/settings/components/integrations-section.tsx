@@ -169,7 +169,7 @@ export function IntegrationsSection({
                 {shopifyResult === 'success' && (
                     <div className="flex items-center gap-2 rounded-lg bg-[#30d158]/10 px-3 py-2 border border-[#30d158]/20 text-[12px] text-[#30d158]">
                         <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        <p>Shopify connecté avec succès ! Vous pouvez synchroniser vos clients et commandes.</p>
+                        <p>Shopify connecté avec succès ! Les commandes enrichissent désormais le contexte client sans créer de tickets.</p>
                     </div>
                 )}
                 {shopifyResult === 'error' && (
@@ -341,7 +341,7 @@ export function IntegrationsSection({
                                     )}
                                 </div>
                                 <p className="text-[12px] text-[#86868b] mt-0.5">
-                                    {isShopifyConnected ? `Connecté : ${shopifyShop ?? 'boutique Shopify'}` : 'Importer les commandes et clients Shopify'}
+                                    {isShopifyConnected ? `Connecté : ${shopifyShop ?? 'boutique Shopify'}` : 'Synchroniser le contexte clients et commandes Shopify'}
                                 </p>
                             </div>
                         </div>
@@ -414,7 +414,7 @@ export function IntegrationsSection({
                             shopifySyncResult.success ? 'bg-[#30d158]/5 border-[#30d158]/10 text-[#30d158]' : 'bg-[#ff453a]/5 border-[#ff453a]/10 text-[#ff453a]'
                         )}>
                             {shopifySyncResult.success ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <AlertCircle className="h-3.5 w-3.5 shrink-0" />}
-                            {shopifySyncResult.success ? `${shopifySyncResult.count} ${shopifySyncResult.type === 'customers' ? 'client(s)' : 'commande(s)'} importé(s)` : 'Erreur de synchronisation'}
+                            {shopifySyncResult.success ? `${shopifySyncResult.count} ${shopifySyncResult.type === 'customers' ? 'client(s)' : 'commande(s)'} synchronisé(s)` : 'Erreur de synchronisation'}
                         </div>
                     )}
                 </div>

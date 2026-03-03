@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
 
 const META_SCOPES = [
+    'pages_show_list',
     'pages_messaging',
     'pages_manage_metadata',
     'pages_read_engagement',

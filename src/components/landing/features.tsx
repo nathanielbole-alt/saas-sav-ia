@@ -9,6 +9,8 @@ import {
   ShoppingBag,
   Star,
   ArrowRight,
+  Zap,
+  UserCheck,
 } from 'lucide-react'
 import { SpotlightCard } from '@/components/landing/magnetic'
 
@@ -87,7 +89,7 @@ export function Features() {
             id="features-heading"
             className="mt-4 max-w-xl text-4xl font-semibold tracking-tighter text-[#EDEDED] md:text-5xl"
           >
-            Trois outils.
+            Cinq outils.
             <br />
             <span className="text-[#E8856C]">Zéro friction.</span>
           </h2>
@@ -225,6 +227,106 @@ export function Features() {
               </div>
             </SpotlightCard>
           </motion.div>
+
+          {/* Row 3: Automations (1fr) + Intelligence Client (2fr) */}
+          <div className="grid gap-4 lg:grid-cols-[1fr_2fr]">
+            {/* Feature 4: Automatisations */}
+            <motion.div variants={fadeUp}>
+              <SpotlightCard className="h-full rounded-xl border border-white/[0.06] bg-[#131316] p-8 transition-colors hover:border-white/[0.1] lg:p-10">
+                <span className="text-[10px] uppercase tracking-widest text-[#E8856C]">
+                  04 — Automatisations
+                </span>
+                <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[#EDEDED]">
+                  Automatisez votre support.
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-[#888]">
+                  Créez des règles if/then pour escalader, router et répondre
+                  automatiquement sans intervention humaine.
+                </p>
+
+                {/* Rule preview */}
+                <div className="mt-8 space-y-3">
+                  <div className="flex items-center gap-3 rounded-lg bg-white/[0.03] p-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-500/10">
+                      <Zap className="h-3.5 w-3.5 text-amber-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-medium text-[#EDEDED]">Escalade auto</p>
+                      <p className="text-[9px] text-[#777]">Sans réponse 4h → Priorité urgente</p>
+                    </div>
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="flex items-center gap-3 rounded-lg bg-white/[0.03] p-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-500/10">
+                      <MessageSquare className="h-3.5 w-3.5 text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-medium text-[#EDEDED]">Auto-réponse</p>
+                      <p className="text-[9px] text-[#777]">Ticket créé → Accusé de réception</p>
+                    </div>
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  </div>
+                </div>
+              </SpotlightCard>
+            </motion.div>
+
+            {/* Feature 5: Intelligence Client 360° */}
+            <motion.div variants={fadeUp}>
+              <SpotlightCard className="h-full rounded-xl border border-white/[0.06] bg-[#131316] p-8 transition-colors hover:border-white/[0.1] lg:p-10">
+                <span className="text-[10px] uppercase tracking-widest text-[#E8856C]">
+                  05 — Intelligence Client
+                </span>
+                <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[#EDEDED]">
+                  Connaissez vos clients. Vraiment.
+                </h3>
+                <p className="mt-3 max-w-[52ch] text-sm leading-relaxed text-[#888]">
+                  Score de santé, segmentation automatique, historique complet et
+                  alertes proactives pour anticiper le churn.
+                </p>
+
+                {/* Client cards preview */}
+                <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    { label: 'VIP', value: '12', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+                    { label: 'Standard', value: '89', color: 'text-[#888]', bg: 'bg-white/[0.03]' },
+                    { label: 'À risque', value: '7', color: 'text-red-400', bg: 'bg-red-500/10' },
+                    { label: 'Nouveaux', value: '23', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                  ].map((seg) => (
+                    <div
+                      key={seg.label}
+                      className={`rounded-lg ${seg.bg} p-4 text-center`}
+                    >
+                      <span
+                        className={`text-2xl font-semibold ${seg.color}`}
+                        style={{ fontVariantNumeric: 'tabular-nums' }}
+                      >
+                        {seg.value}
+                      </span>
+                      <p className="mt-1 text-[10px] text-[#777]">
+                        {seg.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Health score bar */}
+                <div className="mt-5 flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E8856C]/10">
+                    <UserCheck className="h-4 w-4 text-[#E8856C]" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-[#888]">Score santé moyen</span>
+                      <span className="text-[10px] font-medium text-emerald-400" style={{ fontVariantNumeric: 'tabular-nums' }}>78/100</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-white/[0.06]">
+                      <div className="h-full w-[78%] rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" />
+                    </div>
+                  </div>
+                </div>
+              </SpotlightCard>
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     </section>

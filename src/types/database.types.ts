@@ -130,6 +130,14 @@ export type Database = {
           full_name: string | null
           phone: string | null
           metadata: Json | null
+          health_score: number
+          segment: string
+          total_spent: number
+          notes: string | null
+          tags: string[]
+          last_satisfaction_score: number | null
+          first_contact_at: string | null
+          lifetime_tickets: number
           created_at: string
           updated_at: string
         }
@@ -140,6 +148,14 @@ export type Database = {
           full_name?: string | null
           phone?: string | null
           metadata?: Json | null
+          health_score?: number
+          segment?: string
+          total_spent?: number
+          notes?: string | null
+          tags?: string[]
+          last_satisfaction_score?: number | null
+          first_contact_at?: string | null
+          lifetime_tickets?: number
           created_at?: string
           updated_at?: string
         }
@@ -150,6 +166,14 @@ export type Database = {
           full_name?: string | null
           phone?: string | null
           metadata?: Json | null
+          health_score?: number
+          segment?: string
+          total_spent?: number
+          notes?: string | null
+          tags?: string[]
+          last_satisfaction_score?: number | null
+          first_contact_at?: string | null
+          lifetime_tickets?: number
           created_at?: string
           updated_at?: string
         }
@@ -243,7 +267,7 @@ export type Database = {
         Row: {
           id: string
           ticket_id: string
-          sender_type: 'customer' | 'agent' | 'ai'
+          sender_type: 'customer' | 'agent' | 'ai' | 'system'
           sender_id: string | null
           body: string
           metadata: Json | null
@@ -252,7 +276,7 @@ export type Database = {
         Insert: {
           id?: string
           ticket_id: string
-          sender_type: 'customer' | 'agent' | 'ai'
+          sender_type: 'customer' | 'agent' | 'ai' | 'system'
           sender_id?: string | null
           body: string
           metadata?: Json | null
@@ -261,7 +285,7 @@ export type Database = {
         Update: {
           id?: string
           ticket_id?: string
-          sender_type?: 'customer' | 'agent' | 'ai'
+          sender_type?: 'customer' | 'agent' | 'ai' | 'system'
           sender_id?: string | null
           body?: string
           metadata?: Json | null
@@ -352,6 +376,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'integrations_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      integration_event_receipts: {
+        Row: {
+          id: string
+          organization_id: string
+          provider: string
+          external_id: string
+          source: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          provider: string
+          external_id: string
+          source?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          provider?: string
+          external_id?: string
+          source?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'integration_event_receipts_organization_id_fkey'
             columns: ['organization_id']
             isOneToOne: false
             referencedRelation: 'organizations'
@@ -461,6 +526,111 @@ export type Database = {
           },
         ]
       }
+      automations: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          description: string | null
+          is_active: boolean
+          trigger_type: string
+          trigger_config: Json
+          conditions: Json
+          action_type: string
+          action_config: Json
+          execution_count: number
+          last_executed_at: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          description?: string | null
+          is_active?: boolean
+          trigger_type: string
+          trigger_config?: Json
+          conditions?: Json
+          action_type: string
+          action_config?: Json
+          execution_count?: number
+          last_executed_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          description?: string | null
+          is_active?: boolean
+          trigger_type?: string
+          trigger_config?: Json
+          conditions?: Json
+          action_type?: string
+          action_config?: Json
+          execution_count?: number
+          last_executed_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'automations_organization_id_fkey'
+            columns: ['organization_id']
+            isOneToOne: false
+            referencedRelation: 'organizations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'automations_created_by_fkey'
+            columns: ['created_by']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      automation_logs: {
+        Row: {
+          id: string
+          automation_id: string
+          ticket_id: string
+          executed_at: string
+        }
+        Insert: {
+          id?: string
+          automation_id: string
+          ticket_id: string
+          executed_at?: string
+        }
+        Update: {
+          id?: string
+          automation_id?: string
+          ticket_id?: string
+          executed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'automation_logs_automation_id_fkey'
+            columns: ['automation_id']
+            isOneToOne: false
+            referencedRelation: 'automations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'automation_logs_ticket_id_fkey'
+            columns: ['ticket_id']
+            isOneToOne: false
+            referencedRelation: 'tickets'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       ticket_tags: {
         Row: {
           ticket_id: string
@@ -511,7 +681,7 @@ export type Database = {
       ticket_status: 'open' | 'pending' | 'resolved' | 'closed'
       ticket_priority: 'low' | 'medium' | 'high' | 'urgent'
       ticket_channel: 'email' | 'form' | 'google_review' | 'manual' | 'instagram' | 'messenger'
-      sender_type: 'customer' | 'agent' | 'ai'
+      sender_type: 'customer' | 'agent' | 'ai' | 'system'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -533,3 +703,5 @@ export type TicketTag = Database['public']['Tables']['ticket_tags']['Row']
 export type Integration = Database['public']['Tables']['integrations']['Row']
 export type Notification = Database['public']['Tables']['notifications']['Row']
 export type Invitation = Database['public']['Tables']['invitations']['Row']
+export type Automation = Database['public']['Tables']['automations']['Row']
+export type AutomationLog = Database['public']['Tables']['automation_logs']['Row']

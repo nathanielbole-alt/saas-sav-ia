@@ -3,6 +3,11 @@ import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { checkFeatureAccess } from '@/lib/feature-gate'
 import { encrypt } from '@/lib/encryption'
+import {
+  SHOPIFY_API_VERSION,
+  SHOPIFY_DOMAIN_REGEX,
+  SHOPIFY_WEBHOOK_TOPICS,
+} from '@/lib/shopify-context'
 import crypto from 'crypto'
 
 const PROVIDER_TIMEOUT_MS = 10_000
@@ -42,6 +47,70 @@ async function fetchWithTimeout(
     throw error
   } finally {
     clearTimeout(timeoutId)
+  }
+}
+
+async function registerShopifyWebhooks(params: {
+  shop: string
+  accessToken: string
+  baseUrl: string
+}) {
+  const address = `${params.baseUrl}/api/webhooks/shopify`
+
+  const existingRes = await fetchWithTimeout(
+    `https://${params.shop}/admin/api/${SHOPIFY_API_VERSION}/webhooks.json`,
+    {
+      headers: {
+        'X-Shopify-Access-Token': params.accessToken,
+        'Content-Type': 'application/json',
+      },
+    },
+    PROVIDER_TIMEOUT_MS
+  )
+
+  if (!existingRes.ok) {
+    throw new Error(`shopify_webhooks_list_${existingRes.status}`)
+  }
+
+  const existingPayload = (await existingRes.json()) as {
+    webhooks?: Array<{ address?: string; topic?: string }>
+  }
+  const existing = existingPayload.webhooks ?? []
+
+  for (const topic of SHOPIFY_WEBHOOK_TOPICS) {
+    const alreadyRegistered = existing.some(
+      (webhook) => webhook.topic === topic && webhook.address === address
+    )
+
+    if (alreadyRegistered) continue
+
+    const createRes = await fetchWithTimeout(
+      `https://${params.shop}/admin/api/${SHOPIFY_API_VERSION}/webhooks.json`,
+      {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': params.accessToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          webhook: {
+            topic,
+            address,
+            format: 'json',
+          },
+        }),
+      },
+      PROVIDER_TIMEOUT_MS
+    )
+
+    if (!createRes.ok) {
+      throw new Error(`shopify_webhook_create_${topic}_${createRes.status}`)
+    }
+  }
+
+  return {
+    address,
+    topics: [...SHOPIFY_WEBHOOK_TOPICS],
   }
 }
 
@@ -107,9 +176,13 @@ export async function GET(request: NextRequest) {
     }
 
     const code = searchParams.get('code')
-    const shop = searchParams.get('shop') || storedShop
+    const shop = (searchParams.get('shop') || storedShop || '').trim().toLowerCase()
     if (!code || !shop) {
       return redirectTo(request, '/dashboard/settings?shopify=error&message=missing_params')
+    }
+
+    if (!SHOPIFY_DOMAIN_REGEX.test(shop)) {
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=invalid_shop')
     }
 
     const tokenResponse = await fetchWithTimeout(
@@ -136,7 +209,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const tokenData = (await tokenResponse.json()) as { access_token?: string; scope?: string }
+    const tokenData = (await tokenResponse.json()) as {
+      access_token?: string
+      scope?: string
+      refresh_token?: string
+      expires_in?: number
+    }
     const accessToken = tokenData.access_token
     if (!accessToken) {
       return redirectTo(request, '/dashboard/settings?shopify=error&message=token_invalid')
@@ -159,7 +237,7 @@ export async function GET(request: NextRequest) {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('organization_id')
+      .select('organization_id, role')
       .eq('id', user.id)
       .single()
 
@@ -168,7 +246,16 @@ export async function GET(request: NextRequest) {
       return redirectTo(request, '/dashboard/settings?shopify=error&message=no_org')
     }
 
-    const orgId = (profile as { organization_id: string }).organization_id
+    const typedProfile = profile as { organization_id: string; role?: string }
+    if (!['owner', 'admin'].includes(typedProfile.role ?? '')) {
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=forbidden')
+    }
+
+    const orgId = typedProfile.organization_id
+    const tokenExpiresAt =
+      typeof tokenData.expires_in === 'number'
+        ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+        : null
 
     const { data: existingShopify } = await supabase
       .from('integrations')
@@ -184,6 +271,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    let webhookRegistration: { address: string; topics: string[] }
+    try {
+      webhookRegistration = await registerShopifyWebhooks({
+        shop,
+        accessToken,
+        baseUrl: process.env.NEXTAUTH_URL ?? request.nextUrl.origin,
+      })
+    } catch (error) {
+      console.error(
+        'Shopify webhook registration failed:',
+        error instanceof Error ? error.message : 'Unknown error'
+      )
+      return redirectTo(request, '/dashboard/settings?shopify=error&message=webhooks_failed')
+    }
+
     const { error: upsertError } = await supabase
       .from('integrations')
       .upsert(
@@ -192,9 +294,17 @@ export async function GET(request: NextRequest) {
           provider: 'shopify',
           status: 'active',
           access_token: encrypt(accessToken),
-          refresh_token: null,
-          token_expires_at: null,
-          metadata: { shop, scope: tokenData.scope ?? null },
+          refresh_token: tokenData.refresh_token
+            ? encrypt(tokenData.refresh_token)
+            : null,
+          token_expires_at: tokenExpiresAt,
+          metadata: {
+            shop,
+            scope: tokenData.scope ?? null,
+            webhook_address: webhookRegistration.address,
+            webhook_topics: webhookRegistration.topics,
+            webhooks_registered_at: new Date().toISOString(),
+          },
           updated_at: new Date().toISOString(),
         },
         {

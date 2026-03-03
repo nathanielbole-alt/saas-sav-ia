@@ -87,18 +87,25 @@ function mapMessages(
         new Date(b.created_at as string).getTime()
     )
     .map(
-      (message): MockMessage => ({
-        id: message.id as string,
-        senderType: message.sender_type as MockMessage['senderType'],
-        senderName:
-          message.sender_type === 'ai'
-            ? 'Savly'
-            : message.sender_type === 'agent'
-              ? agentName
-              : customerName,
-        body: message.body as string,
-        createdAt: message.created_at as string,
-      })
+      (message): MockMessage => {
+        const senderType =
+          message.sender_type === 'system'
+            ? 'ai'
+            : (message.sender_type as MockMessage['senderType'])
+
+        return {
+          id: message.id as string,
+          senderType,
+          senderName:
+            senderType === 'ai'
+              ? 'Savly'
+              : senderType === 'agent'
+                ? agentName
+                : customerName,
+          body: message.body as string,
+          createdAt: message.created_at as string,
+        }
+      }
     )
 }
 

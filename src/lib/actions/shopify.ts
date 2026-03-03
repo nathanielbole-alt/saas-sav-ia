@@ -8,13 +8,17 @@ import {
   disconnectIntegration,
 } from '@/lib/actions/integrations'
 import { decrypt } from '@/lib/encryption'
-import type { Integration, Json } from '@/types/database.types'
-import { triggerAutoReply } from '@/lib/ai/auto-reply'
-import { checkFeatureAccess } from '@/lib/feature-gate'
+import type { Integration } from '@/types/database.types'
+import {
+  SHOPIFY_API_VERSION,
+  getShopFromMetadata,
+  upsertShopifyCustomerContext,
+  syncShopifyOrderContext,
+  type ShopifyOrderRefund,
+  type ShopifyOrderRefundLineItem,
+} from '@/lib/shopify-context'
 
-const SHOPIFY_API_VERSION = '2024-01'
-
-type ShopifyOrderRefundLineItem = {
+type ShopifyOrderRefundApiLineItem = {
   quantity: number | null
   restock_type?: string | null
   line_item?: {
@@ -23,57 +27,15 @@ type ShopifyOrderRefundLineItem = {
   } | null
 }
 
-type ShopifyOrderRefund = {
+type ShopifyOrderRefundResponse = {
   id: number
   created_at: string
   note: string | null
-  refund_line_items?: ShopifyOrderRefundLineItem[] | null
+  refund_line_items?: ShopifyOrderRefundApiLineItem[] | null
 }
 
 type ShopifyOrderRefundsResponse = {
-  refunds?: ShopifyOrderRefund[]
-}
-
-type StoredRefundLineItem = {
-  quantity: number
-  line_item: {
-    name: string
-    price: string
-  }
-}
-
-type StoredRefund = {
-  id: number
-  created_at: string
-  note: string | null
-  restock: boolean
-  refund_line_items: StoredRefundLineItem[]
-}
-
-type StoredOrder = {
-  name: string
-  total_price: string
-  fulfillment_status: string | null
-  financial_status: string
-  created_at: string
-  refunds: StoredRefund[]
-}
-
-type CustomerOrdersAggregation = {
-  customerId: string
-  baseMetadata: Record<string, unknown>
-  orders: StoredOrder[]
-  totalSpent: number
-  totalRefundsCount: number
-  totalRefundedAmount: number
-}
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return null
-  }
-
-  return value as Record<string, unknown>
+  refunds?: ShopifyOrderRefundResponse[]
 }
 
 function parseMoney(value: string | number | null | undefined): number {
@@ -99,7 +61,7 @@ async function fetchOrderRefunds(
   shop: string,
   accessToken: string,
   orderId: number
-): Promise<StoredRefund[]> {
+): Promise<ShopifyOrderRefund[]> {
   const response = await fetch(
     `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/orders/${orderId}/refunds.json`,
     {
@@ -134,7 +96,9 @@ async function fetchOrderRefunds(
           },
         }
       })
-      .filter((lineItem): lineItem is StoredRefundLineItem => lineItem !== null)
+      .filter(
+        (lineItem): lineItem is ShopifyOrderRefundLineItem => lineItem !== null
+      )
 
     const restock = rawLineItems.some(
       (lineItem) => lineItem.restock_type !== 'no_restock'
@@ -148,18 +112,6 @@ async function fetchOrderRefunds(
       refund_line_items: refundLineItems,
     }
   })
-}
-
-function getShopFromMetadata(metadata: unknown): string | null {
-  if (
-    typeof metadata === 'object' &&
-    metadata !== null &&
-    'shop' in metadata &&
-    typeof (metadata as Record<string, unknown>).shop === 'string'
-  ) {
-    return (metadata as Record<string, unknown>).shop as string
-  }
-  return null
 }
 
 /** Shared helper: auth + org + rate limit + integration */
@@ -266,32 +218,15 @@ export async function syncShopifyCustomers(): Promise<{
     for (const shopifyCustomer of data.customers) {
       if (!shopifyCustomer.email) continue
 
-      // Find or create customer (same pattern as Gmail)
-      const { data: existingCustomers } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('organization_id', orgId)
-        .eq('email', shopifyCustomer.email)
-        .limit(1)
+      const result = await upsertShopifyCustomerContext(orgId, {
+        id: shopifyCustomer.id,
+        email: shopifyCustomer.email,
+        first_name: shopifyCustomer.first_name,
+        last_name: shopifyCustomer.last_name,
+        phone: shopifyCustomer.phone,
+      })
 
-      if (existingCustomers && existingCustomers.length > 0) continue
-
-      const fullName =
-        [shopifyCustomer.first_name, shopifyCustomer.last_name]
-          .filter(Boolean)
-          .join(' ') || null
-
-      const { error: insertError } = await supabase
-        .from('customers')
-        .insert({
-          organization_id: orgId,
-          email: shopifyCustomer.email,
-          full_name: fullName,
-          phone: shopifyCustomer.phone,
-          metadata: { shopify_id: shopifyCustomer.id },
-        })
-
-      if (!insertError) importedCount++
+      if (result.customerId) importedCount++
     }
 
     revalidatePath('/dashboard')
@@ -319,12 +254,6 @@ export async function syncShopifyOrders(): Promise<{
   }
 
   const { supabase, orgId, integration, shop, accessToken } = ctx
-
-  // Check ticket quota before syncing orders (each order creates a ticket)
-  const ticketCheck = await checkFeatureAccess(orgId, 'tickets')
-  if (!ticketCheck.allowed) {
-    return { success: false, count: 0, error: `Limite tickets atteinte (${ticketCheck.current}/${ticketCheck.limit}). Passez à un plan supérieur.` }
-  }
 
   try {
     const response = await fetch(
@@ -366,14 +295,11 @@ export async function syncShopifyOrders(): Promise<{
     }
 
     let importedCount = 0
-    const customerOrdersMap = new Map<string, CustomerOrdersAggregation>()
 
     for (const order of data.orders) {
       const customerEmail = order.email ?? order.customer?.email
       if (!customerEmail) continue
-
-      const shopifyOrderId = String(order.id)
-      let refunds: StoredRefund[] = []
+      let refunds: ShopifyOrderRefund[] = []
 
       try {
         refunds = await fetchOrderRefunds(shop, accessToken, order.id)
@@ -395,165 +321,36 @@ export async function syncShopifyOrders(): Promise<{
           message
         )
       }
-
-      // Find or create customer
-      const { data: existingCustomers } = await supabase
-        .from('customers')
-        .select('id, metadata')
-        .eq('organization_id', orgId)
-        .eq('email', customerEmail)
-        .limit(1)
-
-      let customerId: string
-      let customerMetadata: Record<string, unknown> = {}
-
-      if (existingCustomers && existingCustomers.length > 0) {
-        const existingCustomer = existingCustomers[0] as {
-          id: string
-          metadata: unknown
-        }
-        customerId = existingCustomer.id
-        customerMetadata = toRecord(existingCustomer.metadata) ?? {}
-      } else {
-        const fullName = order.customer
-          ? [order.customer.first_name, order.customer.last_name]
-              .filter(Boolean)
-              .join(' ') || null
-          : null
-
-        const { data: newCustomer } = await supabase
-          .from('customers')
-          .insert({
-            organization_id: orgId,
-            email: customerEmail,
-            full_name: fullName,
-            metadata: order.customer?.id
-              ? { shopify_id: order.customer.id }
-              : null,
-          })
-          .select('id, metadata')
-          .single()
-
-        if (!newCustomer) continue
-        const createdCustomer = newCustomer as { id: string; metadata: unknown }
-        customerId = createdCustomer.id
-        customerMetadata = toRecord(createdCustomer.metadata) ?? {}
-      }
-
-      const normalizedOrder: StoredOrder = {
-        name: order.name,
-        total_price: formatMoney(parseMoney(order.total_price)),
-        fulfillment_status: order.fulfillment_status,
-        financial_status: order.financial_status,
-        created_at: order.created_at,
-        refunds,
-      }
-
-      const refundAmountForOrder = normalizedOrder.refunds.reduce(
-        (sum, refund) =>
-          sum +
-          refund.refund_line_items.reduce(
-            (lineItemsSum, lineItem) =>
-              lineItemsSum +
-              parseMoney(lineItem.line_item.price) * lineItem.quantity,
-            0
-          ),
-        0
-      )
-
-      const existingAggregation = customerOrdersMap.get(customerId)
-      if (existingAggregation) {
-        existingAggregation.orders.push(normalizedOrder)
-        existingAggregation.totalSpent += parseMoney(normalizedOrder.total_price)
-        existingAggregation.totalRefundsCount += normalizedOrder.refunds.length
-        existingAggregation.totalRefundedAmount += refundAmountForOrder
-      } else {
-        customerOrdersMap.set(customerId, {
-          customerId,
-          baseMetadata: customerMetadata,
-          orders: [normalizedOrder],
-          totalSpent: parseMoney(normalizedOrder.total_price),
-          totalRefundsCount: normalizedOrder.refunds.length,
-          totalRefundedAmount: refundAmountForOrder,
-        })
-      }
-
-      // Dedup: check if order already imported (same pattern as Gmail gmail_id)
-      const { data: existingMsg } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('metadata->>shopify_order_id', shopifyOrderId)
-        .limit(1)
-
-      if (existingMsg && existingMsg.length > 0) continue
-
-      // Create ticket for the order
-      const subject = `Commande Shopify ${order.name}`
-      const { data: ticket } = await supabase
-        .from('tickets')
-        .insert({
-          organization_id: orgId,
-          customer_id: customerId,
-          subject,
-          status: 'open',
-          priority: 'medium',
-          channel: 'manual',
-        })
-        .select('id')
-        .single()
-
-      if (!ticket) continue
-
-      // Create message with order details
-      const body = [
-        `Commande: ${order.name}`,
-        `Statut paiement: ${order.financial_status}`,
-        `Statut livraison: ${order.fulfillment_status ?? 'Non expedie'}`,
-        `Date: ${new Date(order.created_at).toLocaleDateString('fr-FR')}`,
-      ].join('\n')
-
-      await supabase.from('messages').insert({
-        ticket_id: (ticket as { id: string }).id,
-        sender_type: 'customer',
-        sender_id: customerId,
-        body,
-        metadata: {
-          shopify_order_id: shopifyOrderId,
-          shopify_order_name: order.name,
+      const synced = await syncShopifyOrderContext(
+        orgId,
+        {
+          id: order.id,
+          name: order.name,
+          email: customerEmail,
+          created_at: order.created_at,
+          total_price: order.total_price,
           financial_status: order.financial_status,
           fulfillment_status: order.fulfillment_status,
+          customer: order.customer
+            ? {
+                id: order.customer.id,
+                email: order.customer.email,
+                first_name: order.customer.first_name,
+                last_name: order.customer.last_name,
+              }
+            : null,
         },
-      })
-
-      triggerAutoReply((ticket as { id: string }).id)
-
-      importedCount++
-    }
-
-    for (const aggregation of customerOrdersMap.values()) {
-      const sortedOrders = [...aggregation.orders].sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        refunds
       )
 
-      const mergedMetadata: Record<string, unknown> = {
-        ...aggregation.baseMetadata,
-        orders_count: sortedOrders.length,
-        total_spent: formatMoney(aggregation.totalSpent),
-        total_refunds_count: aggregation.totalRefundsCount,
-        total_refunded_amount: formatMoney(aggregation.totalRefundedAmount),
-        orders: sortedOrders,
+      if (synced) {
+        importedCount++
       }
-
-      await supabase
-        .from('customers')
-        .update({ metadata: mergedMetadata as Json })
-        .eq('id', aggregation.customerId)
-        .eq('organization_id', orgId)
     }
 
     revalidatePath('/dashboard')
-    revalidatePath('/dashboard/tickets')
+    revalidatePath('/dashboard/inbox')
+    revalidatePath('/dashboard/customers')
     revalidatePath('/dashboard/settings')
 
     return { success: true, count: importedCount }

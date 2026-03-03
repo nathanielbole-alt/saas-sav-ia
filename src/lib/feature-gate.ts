@@ -9,6 +9,7 @@ export type FeatureKey =
   | 'tickets'
   | 'integrations'
   | 'users'
+  | 'automations'
   | 'custom_branding'
   | 'account_manager'
   | 'sla'
@@ -132,6 +133,15 @@ export async function checkFeatureAccess(
       const current = usage.users
       return { allowed: current < limit, current, limit, plan }
     }
+    case 'automations': {
+      const limit = limits.automations
+      const { count } = await supabaseAdmin
+        .from('automations')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
+      const current = count ?? 0
+      return { allowed: current < limit, current, limit, plan }
+    }
     default:
       // Exhaustive guard for future feature keys.
       return { allowed: false, current: 0, limit: 0, plan }
@@ -152,6 +162,7 @@ export async function enforceFeatureAccess(
       tickets: 'tickets',
       integrations: 'intégrations',
       users: 'utilisateurs',
+      automations: 'automatisations',
       custom_branding: 'branding personnalisé',
       account_manager: 'account manager dédié',
       sla: 'SLA garanti',

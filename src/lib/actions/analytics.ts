@@ -149,7 +149,6 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
     .sort((a, b) => a.date.localeCompare(b.date))
 
   // ── KPI A: Average First Response Time ──────────────────────────────
-  // Build map of ticket_id → first agent/AI message timestamp
   const allMsgList = (allMessages ?? []) as { ticket_id: string; sender_type: string; created_at: string }[]
   const msgList = allMsgList.filter((m) => m.sender_type === 'agent' || m.sender_type === 'ai')
   const firstResponseByTicket = new Map<string, string>()
@@ -175,7 +174,6 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
   const avgFirstResponseMinutes = responseCount > 0 ? Math.round(totalResponseMinutes / responseCount) : 0
 
   // ── KPI B: AI Resolution Rate ───────────────────────────────────────
-  // Count tickets that have at least one AI message
   const ticketsWithAi = new Set<string>()
   let aiResponseCount = 0
   for (const m of msgList) {
@@ -236,7 +234,6 @@ export async function getAnalytics(): Promise<AnalyticsData | null> {
     : 0
 
   // ── KPI F: Reopen Rate ────────────────────────────────────────────
-  // Tickets resolved/closed that have a customer message after updated_at
   const customerMsgsByTicket = new Map<string, string[]>()
   for (const m of allMsgList) {
     if (m.sender_type === 'customer') {

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import type { Integration } from '@/types/database.types'
 
 const GRAPH_API = 'https://graph.facebook.com/v21.0'
+const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000
 
 function toRecord(value: unknown): Record<string, unknown> | null {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -20,6 +21,15 @@ const sendMetaReplyParamsSchema = z.object({
     recipientId: z.string().min(1),
     messageText: z.string().min(1),
 })
+
+function isTokenExpiredSoon(tokenExpiresAt: string | null | undefined): boolean {
+    if (!tokenExpiresAt) return false
+
+    const expiresAt = new Date(tokenExpiresAt).getTime()
+    if (Number.isNaN(expiresAt)) return false
+
+    return expiresAt - Date.now() <= TOKEN_REFRESH_WINDOW_MS
+}
 
 /**
  * Send a reply via Instagram DM or Facebook Messenger.
@@ -52,12 +62,19 @@ export async function sendMetaReply(params: {
     }
 
     const typedIntegration = integration as Integration
-    const pageAccessToken = typedIntegration.access_token
+    let pageAccessToken = typedIntegration.access_token
         ? decrypt(typedIntegration.access_token)
         : null
 
     if (!pageAccessToken) {
         return { success: false, error: 'No Meta page access token' }
+    }
+
+    if (isTokenExpiredSoon(typedIntegration.token_expires_at)) {
+        const refreshResult = await refreshMetaPageToken(typedIntegration.id)
+        if (refreshResult.success && refreshResult.newToken) {
+            pageAccessToken = refreshResult.newToken
+        }
     }
 
     try {
