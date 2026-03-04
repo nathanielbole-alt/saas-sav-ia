@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { mockTickets } from '@/lib/mock-data'
 
+// DEV-ONLY: manual seed endpoint — consider restricting to development
 export async function POST() {
     if (process.env.NODE_ENV === 'production') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -61,7 +62,7 @@ export async function POST() {
                     .insert({
                         organization_id: orgId,
                         email: c.email,
-                        full_name: c.name,
+                        full_name: c.full_name,
                     })
                     .select('id')
                     .single()
@@ -86,11 +87,8 @@ export async function POST() {
                     status: t.status,
                     priority: t.priority,
                     channel: t.channel,
-                    assigned_to: t.assignedTo ? user.id : null, // Assign to current user if not null in mock
-                    // 'unread' is not in schema yet? Let's check schema.
-                    // Schema doesn't have 'unread'. We might need to migrate or ignore for now.
-                    // We'll ignore 'unread' for db insertion as it's likely a computed/local state or needs schema update.
-                    created_at: t.createdAt,
+                    assigned_to: t.assigned_to ? user.id : null,
+                    created_at: t.created_at,
                 })
                 .select('id')
                 .single()
@@ -101,10 +99,11 @@ export async function POST() {
             // Insert Messages
             const messagesPayload = t.messages.map((m) => ({
                 ticket_id: newTicket.id,
-                sender_type: m.senderType,
-                sender_id: m.senderType === 'agent' ? user.id : customerId, // Simple mapping
+                sender_type: m.sender_type,
+                sender_id: m.sender_type === 'agent' ? user.id : customerId,
                 body: m.body,
-                created_at: m.createdAt,
+                created_at: m.created_at,
+                metadata: m.metadata,
             }))
 
             const { error: msgError } = await supabase

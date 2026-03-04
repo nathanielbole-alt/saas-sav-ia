@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import {
   createCronSummary,
   processAutomation,
   type AutomationRecord,
-} from '@/lib/automation-engine'
+} from '@/lib/automation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -16,8 +17,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  const authHeader = request.headers.get('authorization') ?? ''
+  const expected = `Bearer ${cronSecret}`
+  const isValid =
+    authHeader.length === expected.length &&
+    crypto.timingSafeEqual(
+      Buffer.from(authHeader, 'utf8'),
+      Buffer.from(expected, 'utf8')
+    )
+  if (!isValid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

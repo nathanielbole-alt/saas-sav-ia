@@ -1,44 +1,13 @@
 'use server'
 
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { MockTicket, MockMessage, MockCustomer } from '@/lib/mock-data'
 import { sendGmailReply } from '@/lib/actions/gmail'
-import { sendMetaReply, extractMetaReplyContext } from '@/lib/actions/meta'
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return null
-  }
-  return value as Record<string, unknown>
-}
-
-function extractGmailReplyContext(metadata: unknown): {
-  threadId: string | null
-  inReplyToMessageId: string | null
-} {
-  const metadataRecord = toRecord(metadata)
-  if (!metadataRecord) {
-    return { threadId: null, inReplyToMessageId: null }
-  }
-
-  const threadId =
-    typeof metadataRecord.gmail_thread_id === 'string'
-      ? metadataRecord.gmail_thread_id
-      : null
-
-  const inReplyToMessageId =
-    typeof metadataRecord.gmail_message_id_header === 'string'
-      ? metadataRecord.gmail_message_id_header
-      : typeof metadataRecord.in_reply_to_message_id === 'string'
-        ? metadataRecord.in_reply_to_message_id
-        : typeof metadataRecord.message_id === 'string'
-          ? metadataRecord.message_id
-          : null
-
-  return { threadId, inReplyToMessageId }
-}
+import { extractMetaReplyContext, sendMetaReply } from '@/lib/actions/meta'
+// DEMO_MODE: ticket/customer/message data still uses placeholder content until real app models replace it.
+import type { TicketCustomer, TicketMessage, TicketWithRelations } from '@/types/view-models'
+import { createClient } from '@/lib/supabase/server'
+import { extractGmailReplyContext, toRecord } from '@/lib/utils'
 
 async function getTicketViewerContext() {
   const supabase = await createClient()
@@ -48,121 +17,87 @@ async function getTicketViewerContext() {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .single()
-
-  const profile = profileData as { full_name: string | null } | null
-  const agentName = profile?.full_name ?? user.email?.split('@')[0] ?? 'Agent'
-
-  return { supabase, user, agentName }
+  return { supabase, user }
 }
 
 function mapCustomer(
   ticket: Record<string, unknown>,
   customerRaw: Record<string, unknown> | null
-): MockCustomer {
+): TicketCustomer {
   return {
     id: (customerRaw?.id as string) ?? (ticket.customer_id as string),
-    name:
-      (customerRaw?.full_name as string) ??
-      (customerRaw?.email as string) ??
-      'Client inconnu',
     email: (customerRaw?.email as string) ?? '',
+    full_name: (customerRaw?.full_name as string | null) ?? null,
+    metadata: (customerRaw?.metadata as TicketCustomer['metadata']) ?? null,
   }
 }
 
-function mapMessages(
-  messagesRaw: Record<string, unknown>[],
-  customerName: string,
-  agentName: string
-): MockMessage[] {
+function mapMessages(messagesRaw: Record<string, unknown>[]): TicketMessage[] {
   return messagesRaw
     .slice()
     .sort(
-      (a, b) =>
-        new Date(a.created_at as string).getTime() -
-        new Date(b.created_at as string).getTime()
+      (left, right) =>
+        new Date(left.created_at as string).getTime() -
+        new Date(right.created_at as string).getTime()
     )
     .map(
-      (message): MockMessage => {
-        const senderType =
-          message.sender_type === 'system'
-            ? 'ai'
-            : (message.sender_type as MockMessage['senderType'])
-
-        return {
-          id: message.id as string,
-          senderType,
-          senderName:
-            senderType === 'ai'
-              ? 'Savly'
-              : senderType === 'agent'
-                ? agentName
-                : customerName,
-          body: message.body as string,
-          createdAt: message.created_at as string,
-        }
-      }
+      (message): TicketMessage => ({
+        id: message.id as string,
+        body: message.body as string,
+        sender_type: message.sender_type as TicketMessage['sender_type'],
+        sender_id: (message.sender_id as string | null) ?? null,
+        created_at: message.created_at as string,
+        metadata: (message.metadata as TicketMessage['metadata']) ?? null,
+      })
     )
 }
 
-function mapTags(
-  tagsRaw: { tag: Record<string, unknown> | null }[]
-): string[] {
+function mapTags(tagsRaw: { tag: Record<string, unknown> | null }[]): string[] {
   return tagsRaw
-    .map((rel) => rel.tag?.name as string | undefined)
+    .map((relation) => relation.tag?.name as string | undefined)
     .filter((name): name is string => Boolean(name))
 }
 
 function buildTicket(
   ticket: Record<string, unknown>,
-  customer: MockCustomer,
-  customerMetadata: Record<string, unknown> | null,
+  customer: TicketCustomer,
   tags: string[],
-  messages: MockMessage[],
-  userId: string,
-  agentName: string,
-  latestMessage: MockMessage | null = messages[messages.length - 1] ?? null
-): MockTicket {
-  const unread =
-    (ticket.status as string) === 'open' &&
-    latestMessage?.senderType === 'customer'
-
-  const assignedTo = ticket.assigned_to
-    ? ticket.assigned_to === userId
-      ? agentName
-      : (ticket.assigned_to as string)
-    : null
-
+  messages: TicketMessage[],
+  latestMessage: TicketMessage | null = messages[messages.length - 1] ?? null
+): TicketWithRelations {
   return {
     id: ticket.id as string,
+    organization_id: ticket.organization_id as string,
+    customer_id: ticket.customer_id as string,
+    assigned_to: (ticket.assigned_to as string | null) ?? null,
     subject: ticket.subject as string,
+    status: ticket.status as TicketWithRelations['status'],
+    priority: ticket.priority as TicketWithRelations['priority'],
+    channel: ticket.channel as TicketWithRelations['channel'],
+    metadata: (ticket.metadata as TicketWithRelations['metadata']) ?? null,
+    ai_summary: (ticket.ai_summary as string | null) ?? null,
+    csat_rating: (ticket.csat_rating as number | null) ?? null,
+    csat_comment: (ticket.csat_comment as string | null) ?? null,
+    csat_at: (ticket.csat_at as string | null) ?? null,
+    created_at: ticket.created_at as string,
+    updated_at: ticket.updated_at as string,
     customer,
-    customerMetadata,
-    status: ticket.status as MockTicket['status'],
-    priority: ticket.priority as MockTicket['priority'],
-    channel: ticket.channel as MockTicket['channel'],
-    assignedTo,
-    assignedToId: (ticket.assigned_to as string) ?? null,
-    unread,
-    tags,
-    csatRating: (ticket.csat_rating as number | null) ?? null,
-    createdAt: ticket.created_at as string,
-    lastMessagePreview: latestMessage?.body ?? null,
-    lastMessageAt: latestMessage?.createdAt ?? null,
-    lastMessageSenderType: latestMessage?.senderType ?? null,
     messages,
+    unread:
+      (ticket.status as string) === 'open' &&
+      latestMessage?.sender_type === 'customer',
+    last_message_preview: latestMessage?.body.slice(0, 120) ?? null,
+    last_message_at: latestMessage?.created_at ?? null,
+    last_message_sender_type: latestMessage?.sender_type ?? null,
+    tags,
   }
 }
 
-export async function getTickets(): Promise<MockTicket[]> {
+export async function getTickets(): Promise<TicketWithRelations[]> {
   const context = await getTicketViewerContext()
   if (!context) return []
 
-  const { supabase, user, agentName } = context
+  const { supabase } = context
 
   const { data: rawTickets, error } = await supabase
     .from('tickets')
@@ -181,50 +116,48 @@ export async function getTickets(): Promise<MockTicket[]> {
     return []
   }
 
-  // Map Supabase rows (snake_case, nested) → MockTicket (camelCase, flat)
-  return (rawTickets as unknown[]).map((raw): MockTicket => {
-    const t = raw as Record<string, unknown>
-    const customerRaw = t.customer as Record<string, unknown> | null
-    const messagesRaw = (t.messages ?? []) as Record<string, unknown>[]
-    const tagsRaw = (t.tags ?? []) as { tag: Record<string, unknown> | null }[]
-
-    const customer = mapCustomer(t, customerRaw)
-    const messages = mapMessages(messagesRaw, customer.name, agentName)
-    const tags = mapTags(tagsRaw)
+  return (rawTickets as unknown[]).map((raw): TicketWithRelations => {
+    const ticket = raw as Record<string, unknown>
+    const customerRaw = ticket.customer as Record<string, unknown> | null
+    const messagesRaw = (ticket.messages ?? []) as Record<string, unknown>[]
+    const tagsRaw = (ticket.tags ?? []) as { tag: Record<string, unknown> | null }[]
 
     return buildTicket(
-      t,
-      customer,
-      toRecord(customerRaw?.metadata) ?? null,
-      tags,
-      messages,
-      user.id,
-      agentName
+      ticket,
+      mapCustomer(ticket, customerRaw),
+      mapTags(tagsRaw),
+      mapMessages(messagesRaw)
     )
   })
 }
 
-export async function getTicketsList(): Promise<MockTicket[]> {
+export async function getTicketsList(): Promise<TicketWithRelations[]> {
   const context = await getTicketViewerContext()
   if (!context) return []
 
-  const { supabase, user, agentName } = context
+  const { supabase } = context
 
   const { data: rawTickets, error } = await supabase
     .from('tickets')
     .select(
       `
       id,
+      organization_id,
+      customer_id,
+      assigned_to,
       subject,
       status,
       priority,
       channel,
-      assigned_to,
+      metadata,
+      ai_summary,
       csat_rating,
+      csat_comment,
+      csat_at,
       created_at,
-      customer_id,
+      updated_at,
       customer:customers(id, full_name, email, metadata),
-      messages(id, sender_type, body, created_at),
+      messages(id, sender_type, sender_id, body, created_at, metadata),
       tags:ticket_tags(tag:tags(name))
     `
     )
@@ -237,56 +170,36 @@ export async function getTicketsList(): Promise<MockTicket[]> {
     return []
   }
 
-  return (rawTickets as unknown[]).map((raw): MockTicket => {
+  return (rawTickets as unknown[]).map((raw): TicketWithRelations => {
     const ticket = raw as Record<string, unknown>
     const customerRaw = ticket.customer as Record<string, unknown> | null
     const previewMessagesRaw = (ticket.messages ?? []) as Record<string, unknown>[]
     const tagsRaw = (ticket.tags ?? []) as { tag: Record<string, unknown> | null }[]
-
-    const customer = mapCustomer(ticket, customerRaw)
-    const previewMessages = mapMessages(previewMessagesRaw, customer.name, agentName)
+    const previewMessages = mapMessages(previewMessagesRaw)
     const latestMessage = previewMessages[previewMessages.length - 1] ?? null
 
     return buildTicket(
       ticket,
-      customer,
-      toRecord(customerRaw?.metadata) ?? null,
+      mapCustomer(ticket, customerRaw),
       mapTags(tagsRaw),
       [],
-      user.id,
-      agentName,
       latestMessage
     )
   })
 }
 
-export async function getTicketMessages(ticketId: string): Promise<MockMessage[]> {
+export async function getTicketMessages(ticketId: string): Promise<TicketMessage[]> {
   const parsed = z.string().uuid().safeParse(ticketId)
   if (!parsed.success) return []
 
   const context = await getTicketViewerContext()
   if (!context) return []
 
-  const { supabase, agentName } = context
-
-  const { data: ticketData } = await supabase
-    .from('tickets')
-    .select('id, customer:customers(full_name, email)')
-    .eq('id', parsed.data)
-    .maybeSingle()
-
-  if (!ticketData) return []
-
-  const ticket = ticketData as Record<string, unknown>
-  const customerRaw = ticket.customer as Record<string, unknown> | null
-  const customerName =
-    (customerRaw?.full_name as string) ??
-    (customerRaw?.email as string) ??
-    'Client inconnu'
+  const { supabase } = context
 
   const { data: rawMessages, error } = await supabase
     .from('messages')
-    .select('id, sender_type, body, created_at')
+    .select('id, sender_type, sender_id, body, created_at, metadata')
     .eq('ticket_id', parsed.data)
     .order('created_at', { ascending: true })
 
@@ -295,28 +208,16 @@ export async function getTicketMessages(ticketId: string): Promise<MockMessage[]
     return []
   }
 
-  return mapMessages(
-    rawMessages as Record<string, unknown>[],
-    customerName,
-    agentName
-  )
+  return mapMessages(rawMessages as Record<string, unknown>[])
 }
 
-export async function getMyTickets(): Promise<MockTicket[]> {
+export async function getMyTickets(): Promise<TicketWithRelations[]> {
   const supabase = await createClient()
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return []
-
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .single()
-  const profile = profileData as { full_name: string | null } | null
-  const agentName = profile?.full_name ?? user.email?.split('@')[0] ?? 'Agent'
 
   const { data: rawTickets, error } = await supabase
     .from('tickets')
@@ -336,28 +237,18 @@ export async function getMyTickets(): Promise<MockTicket[]> {
     return []
   }
 
-  return (rawTickets as unknown[]).map((raw): MockTicket => {
-    const t = raw as Record<string, unknown>
-    const customerRaw = t.customer as Record<string, unknown> | null
-    const messagesRaw = (t.messages ?? []) as Record<string, unknown>[]
-    const tagsRaw = (t.tags ?? []) as { tag: Record<string, unknown> | null }[]
+  return (rawTickets as unknown[]).map((raw): TicketWithRelations => {
+    const ticket = raw as Record<string, unknown>
+    const customerRaw = ticket.customer as Record<string, unknown> | null
+    const messagesRaw = (ticket.messages ?? []) as Record<string, unknown>[]
+    const tagsRaw = (ticket.tags ?? []) as { tag: Record<string, unknown> | null }[]
 
-    const customer = mapCustomer(t, customerRaw)
-    const messages = mapMessages(messagesRaw, customer.name, agentName)
-    const mappedTicket = buildTicket(
-      t,
-      customer,
-      toRecord(customerRaw?.metadata) ?? null,
+    return buildTicket(
+      ticket,
+      mapCustomer(ticket, customerRaw),
       mapTags(tagsRaw),
-      messages,
-      user.id,
-      agentName
+      mapMessages(messagesRaw)
     )
-
-    return {
-      ...mappedTicket,
-      assignedTo: agentName,
-    }
   })
 }
 
@@ -446,7 +337,6 @@ export async function sendMessage(ticketId: string, body: string) {
     }
   }
 
-  // Relay agent message via Meta for Instagram/Messenger channels
   if ((channel === 'instagram' || channel === 'messenger') && organizationId) {
     const { data: ticketForMeta } = await supabase
       .from('tickets')

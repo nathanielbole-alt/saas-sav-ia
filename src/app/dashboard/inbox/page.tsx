@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getTicketsList } from '@/lib/actions/tickets'
 import InboxClient from './inbox-client'
-import type { MockTicket } from '@/lib/mock-data'
+// DEMO_MODE: inbox page still types its payload with placeholder ticket data.
+import type { TicketWithRelations } from '@/types/view-models'
 
 export default async function InboxPage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
@@ -9,7 +10,7 @@ export default async function InboxPage(props: {
   const searchParams = await props.searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const tickets: MockTicket[] = await getTicketsList()
+  const tickets: TicketWithRelations[] = await getTicketsList()
   const { data: profile } = user
     ? await supabase
       .from('profiles')

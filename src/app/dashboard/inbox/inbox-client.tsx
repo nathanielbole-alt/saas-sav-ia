@@ -1,223 +1,228 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { TicketList, type TicketFilter } from '@/components/dashboard/ticket-list'
-import { TicketDetail } from '@/components/dashboard/ticket-detail'
 import { getTicketMessages, sendMessage } from '@/lib/actions/tickets'
-import { type MockTicket, type MockMessage } from '@/lib/mock-data'
+import { TicketDetail } from '@/components/dashboard/ticket-detail'
+import { TicketList, type TicketFilter } from '@/components/dashboard/ticket-list'
+// DEMO_MODE: inbox client state still uses placeholder ticket/message data until the real domain types are introduced.
 import { useRealtimeTickets } from '@/hooks/use-realtime-tickets'
-
-// ── Client Component ────────────────────────────────────────────────────────
+import type { TicketMessage, TicketWithRelations } from '@/types/view-models'
+import { getCustomerName } from '@/lib/utils'
 
 export default function DashboardClient({
-    initialTickets,
-    organizationId,
-    currentUserId,
-    initialSelectedId = null,
+  initialTickets,
+  organizationId,
+  currentUserId,
+  initialSelectedId = null,
 }: {
-    initialTickets: MockTicket[]
-    organizationId: string | null
-    currentUserId: string | null
-    initialSelectedId?: string | null
+  initialTickets: TicketWithRelations[]
+  organizationId: string | null
+  currentUserId: string | null
+  initialSelectedId?: string | null
 }) {
-    const initialSelection =
-        initialSelectedId && initialTickets.some((ticket) => ticket.id === initialSelectedId)
-            ? initialSelectedId
-            : (initialTickets[0]?.id ?? null)
+  const initialSelection =
+    initialSelectedId && initialTickets.some((ticket) => ticket.id === initialSelectedId)
+      ? initialSelectedId
+      : (initialTickets[0]?.id ?? null)
 
-    const { tickets, setTickets } = useRealtimeTickets(initialTickets, organizationId)
-    const [selectedId, setSelectedId] = useState<string | null>(initialSelection)
-    const [filter, setFilter] = useState<TicketFilter>('all')
-    const [search, setSearch] = useState('')
-    const loadedMessagesRef = useRef(
-        new Set(initialTickets.filter((ticket) => ticket.messages.length > 0).map((ticket) => ticket.id))
+  const { tickets, setTickets } = useRealtimeTickets(initialTickets, organizationId)
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelection)
+  const [filter, setFilter] = useState<TicketFilter>('all')
+  const [search, setSearch] = useState('')
+  const loadedMessagesRef = useRef(
+    new Set(
+      initialTickets
+        .filter((ticket) => ticket.messages.length > 0)
+        .map((ticket) => ticket.id)
     )
+  )
 
-    // Sync with server data when it changes (after actions)
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            loadedMessagesRef.current = new Set(
-                initialTickets
-                    .filter((ticket) => ticket.messages.length > 0)
-                    .map((ticket) => ticket.id)
-            )
-            setTickets(initialTickets)
-            setSelectedId((previousSelectedId) => {
-                if (
-                    previousSelectedId &&
-                    initialTickets.some((ticket) => ticket.id === previousSelectedId)
-                ) {
-                    return previousSelectedId
-                }
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      loadedMessagesRef.current = new Set(
+        initialTickets
+          .filter((ticket) => ticket.messages.length > 0)
+          .map((ticket) => ticket.id)
+      )
+      setTickets(initialTickets)
+      setSelectedId((previousSelectedId) => {
+        if (
+          previousSelectedId &&
+          initialTickets.some((ticket) => ticket.id === previousSelectedId)
+        ) {
+          return previousSelectedId
+        }
 
-                if (
-                    initialSelectedId &&
-                    initialTickets.some((ticket) => ticket.id === initialSelectedId)
-                ) {
-                    return initialSelectedId
-                }
+        if (
+          initialSelectedId &&
+          initialTickets.some((ticket) => ticket.id === initialSelectedId)
+        ) {
+          return initialSelectedId
+        }
 
-                return initialTickets[0]?.id ?? null
-            })
-        }, 0)
+        return initialTickets[0]?.id ?? null
+      })
+    }, 0)
 
-        return () => clearTimeout(timeout)
-    }, [initialTickets, initialSelectedId, setTickets])
+    return () => clearTimeout(timeout)
+  }, [initialTickets, initialSelectedId, setTickets])
 
-    useEffect(() => {
-        if (!selectedId || loadedMessagesRef.current.has(selectedId)) return
+  useEffect(() => {
+    if (!selectedId || loadedMessagesRef.current.has(selectedId)) return
 
-        const selectedTicket = tickets.find((ticket) => ticket.id === selectedId)
-        if (!selectedTicket) return
+    const selectedTicket = tickets.find((ticket) => ticket.id === selectedId)
+    if (!selectedTicket) return
 
-        let isActive = true
+    let isActive = true
 
-        void getTicketMessages(selectedId).then((messages) => {
-            if (!isActive) return
+    void getTicketMessages(selectedId).then((messages) => {
+      if (!isActive) return
 
-            loadedMessagesRef.current.add(selectedId)
+      loadedMessagesRef.current.add(selectedId)
 
-            setTickets((previousTickets) =>
-                previousTickets.map((ticket) => {
-                    if (ticket.id !== selectedId) return ticket
+      setTickets((previousTickets) =>
+        previousTickets.map((ticket) => {
+          if (ticket.id !== selectedId) return ticket
 
-                    const tempMessages = ticket.messages.filter((message) =>
-                        message.id.startsWith('m-temp-')
-                    )
-                    const mergedMessages = [...messages]
+          const tempMessages = ticket.messages.filter((message) =>
+            message.id.startsWith('m-temp-')
+          )
+          const mergedMessages = [...messages]
 
-                    for (const tempMessage of tempMessages) {
-                        if (!mergedMessages.some((message) => message.id === tempMessage.id)) {
-                            mergedMessages.push(tempMessage)
-                        }
-                    }
+          for (const tempMessage of tempMessages) {
+            if (!mergedMessages.some((message) => message.id === tempMessage.id)) {
+              mergedMessages.push(tempMessage)
+            }
+          }
 
-                    mergedMessages.sort(
-                        (a, b) =>
-                            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                    )
+          mergedMessages.sort(
+            (left, right) =>
+              new Date(left.created_at).getTime() -
+              new Date(right.created_at).getTime()
+          )
 
-                    const lastMessage = mergedMessages[mergedMessages.length - 1]
+          const lastMessage = mergedMessages[mergedMessages.length - 1]
 
-                    return {
-                        ...ticket,
-                        unread:
-                            ticket.status === 'open' &&
-                            lastMessage?.senderType === 'customer',
-                        lastMessagePreview:
-                            lastMessage?.body ?? ticket.lastMessagePreview ?? null,
-                        lastMessageAt:
-                            lastMessage?.createdAt ?? ticket.lastMessageAt ?? null,
-                        lastMessageSenderType:
-                            lastMessage?.senderType ?? ticket.lastMessageSenderType ?? null,
-                        messages: mergedMessages,
-                    }
-                })
-            )
+          return {
+            ...ticket,
+            unread:
+              ticket.status === 'open' &&
+              lastMessage?.sender_type === 'customer',
+            last_message_preview:
+              lastMessage?.body.slice(0, 120) ?? ticket.last_message_preview ?? null,
+            last_message_at:
+              lastMessage?.created_at ?? ticket.last_message_at ?? null,
+            last_message_sender_type:
+              lastMessage?.sender_type ?? ticket.last_message_sender_type ?? null,
+            messages: mergedMessages,
+          }
         })
-
-        return () => {
-            isActive = false
-        }
-    }, [selectedId, tickets, setTickets])
-
-    // ── Filtered tickets ────────────────────────────────────────────────────
-
-    const filteredTickets = tickets.filter((t) => {
-        if (filter === 'unread' && !t.unread) return false
-        if (filter === 'mine' && t.assignedToId !== currentUserId) return false
-
-        if (search.trim()) {
-            const q = search.toLowerCase()
-            const lastMessageBody =
-                t.messages[t.messages.length - 1]?.body ?? t.lastMessagePreview ?? ''
-            return (
-                t.subject.toLowerCase().includes(q) ||
-                t.customer.name.toLowerCase().includes(q) ||
-                t.customer.email.toLowerCase().includes(q) ||
-                lastMessageBody.toLowerCase().includes(q)
-            )
-        }
-
-        return true
+      )
     })
 
-    const selectedTicket = tickets.find((t) => t.id === selectedId) ?? null
+    return () => {
+      isActive = false
+    }
+  }, [selectedId, tickets, setTickets])
 
-    // ── Select ticket & mark as read ────────────────────────────────────────
+  const filteredTickets = tickets.filter((ticket) => {
+    if (filter === 'unread' && !ticket.unread) return false
+    if (filter === 'mine' && ticket.assigned_to !== currentUserId) return false
 
-    const handleSelect = useCallback((id: string) => {
-        setSelectedId(id)
-        setTickets((prev) =>
-            prev.map((t) => (t.id === id ? { ...t, unread: false } : t))
+    if (search.trim()) {
+      const query = search.toLowerCase()
+      const lastMessageBody =
+        ticket.messages[ticket.messages.length - 1]?.body ??
+        ticket.last_message_preview ??
+        ''
+
+      return (
+        ticket.subject.toLowerCase().includes(query) ||
+        getCustomerName(ticket.customer).toLowerCase().includes(query) ||
+        ticket.customer.email.toLowerCase().includes(query) ||
+        lastMessageBody.toLowerCase().includes(query)
+      )
+    }
+
+    return true
+  })
+
+  const selectedTicket = tickets.find((ticket) => ticket.id === selectedId) ?? null
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      setSelectedId(id)
+      setTickets((previousTickets) =>
+        previousTickets.map((ticket) =>
+          ticket.id === id ? { ...ticket, unread: false } : ticket
         )
-        // TODO: Call server action to mark as read
-    }, [setTickets])
+      )
+    },
+    [setTickets]
+  )
 
-    // ── Send agent message ──────────────────────────────────────────────────
+  const handleSendMessage = useCallback(
+    async (body: string) => {
+      if (!selectedId || !body.trim()) return
 
-    const handleSendMessage = useCallback(
-        async (body: string) => {
-            if (!selectedId || !body.trim()) return
+      const newMessage: TicketMessage = {
+        id: `m-temp-${Date.now()}`,
+        sender_type: 'agent',
+        sender_id: currentUserId,
+        body: body.trim(),
+        created_at: new Date().toISOString(),
+        metadata: null,
+      }
 
-            // Optimistic update
-            const newMsg: MockMessage = {
-                id: `m-temp-${Date.now()}`,
-                senderType: 'agent',
-                senderName: 'Nathaniel B.', // Ideally get from auth context
-                body: body.trim(),
-                createdAt: new Date().toISOString(),
-            }
+      setTickets((previousTickets) => {
+        const targetIndex = previousTickets.findIndex(
+          (ticket) => ticket.id === selectedId
+        )
+        if (targetIndex < 0) return previousTickets
 
-            setTickets((prev) =>
-              {
-                const targetIndex = prev.findIndex((ticket) => ticket.id === selectedId)
-                if (targetIndex < 0) return prev
+        const targetTicket = previousTickets[targetIndex]
+        if (!targetTicket) return previousTickets
 
-                const target = prev[targetIndex]
-                if (!target) return prev
+        const updatedTicket: TicketWithRelations = {
+          ...targetTicket,
+          unread: false,
+          last_message_preview: newMessage.body.slice(0, 120),
+          last_message_at: newMessage.created_at,
+          last_message_sender_type: newMessage.sender_type,
+          messages: [...targetTicket.messages, newMessage],
+        }
 
-                const updatedTicket: MockTicket = {
-                  ...target,
-                  unread: false,
-                  lastMessagePreview: newMsg.body,
-                  lastMessageAt: newMsg.createdAt,
-                  lastMessageSenderType: newMsg.senderType,
-                  messages: [...target.messages, newMsg],
-                }
+        const remainingTickets = previousTickets.filter(
+          (_, index) => index !== targetIndex
+        )
+        return [updatedTicket, ...remainingTickets]
+      })
 
-                const remaining = prev.filter((_, index) => index !== targetIndex)
-                return [updatedTicket, ...remaining]
-              })
+      try {
+        await sendMessage(selectedId, body)
+      } catch (error) {
+        console.error('Failed to send message', error)
+      }
+    },
+    [currentUserId, selectedId, setTickets]
+  )
 
-            try {
-                await sendMessage(selectedId, body)
-            } catch (error) {
-                console.error('Failed to send message', error)
-                // Revert or show error toast
-            }
-        },
-        [selectedId, setTickets]
-    )
-
-    // ── Render ──────────────────────────────────────────────────────────────
-
-    return (
-        <div className="flex h-full">
-            <TicketList
-                tickets={filteredTickets}
-                selectedId={selectedId}
-                onSelect={handleSelect}
-                filter={filter}
-                onFilterChange={setFilter}
-                search={search}
-                onSearchChange={setSearch}
-            />
-            <TicketDetail
-                key={selectedTicket?.id ?? 'empty-ticket'}
-                ticket={selectedTicket}
-                onSendMessage={handleSendMessage}
-            />
-        </div>
-    )
+  return (
+    <div className="flex h-full">
+      <TicketList
+        tickets={filteredTickets}
+        selectedId={selectedId}
+        onSelect={handleSelect}
+        filter={filter}
+        onFilterChange={setFilter}
+        search={search}
+        onSearchChange={setSearch}
+      />
+      <TicketDetail
+        key={selectedTicket?.id ?? 'empty-ticket'}
+        ticket={selectedTicket}
+        onSendMessage={handleSendMessage}
+      />
+    </div>
+  )
 }

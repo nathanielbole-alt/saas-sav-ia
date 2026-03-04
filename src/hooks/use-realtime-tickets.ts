@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { MockMessage, MockTicket } from '@/lib/mock-data'
+// DEMO_MODE: realtime ticket state still targets demo ticket/message data until the UI fully uses DB-native models.
 import type { Database } from '@/types/database.types'
+import type { TicketMessage, TicketWithRelations } from '@/types/view-models'
 
 type UseRealtimeTicketsResult = {
-  tickets: MockTicket[]
-  setTickets: Dispatch<SetStateAction<MockTicket[]>>
+  tickets: TicketWithRelations[]
+  setTickets: Dispatch<SetStateAction<TicketWithRelations[]>>
 }
 
 type TicketRow = Database['public']['Tables']['tickets']['Row']
@@ -16,17 +17,10 @@ type CustomerRow = Database['public']['Tables']['customers']['Row']
 type MessageRow = Database['public']['Tables']['messages']['Row']
 type TagRow = Database['public']['Tables']['tags']['Row']
 
-type TicketWithRelations = TicketRow & {
+type TicketRowWithRelations = TicketRow & {
   customer: CustomerRow | null
   messages: MessageRow[] | null
   tags: Array<{ tag: TagRow | null }> | null
-}
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return null
-  }
-  return value as Record<string, unknown>
 }
 
 function toTimestamp(value: string): number {
@@ -34,77 +28,49 @@ function toTimestamp(value: string): number {
   return Number.isNaN(timestamp) ? 0 : timestamp
 }
 
-function getAgentDisplayName(messages: MockMessage[]): string {
-  return messages.find((message) => message.senderType === 'agent')?.senderName ?? 'Agent'
-}
-
-function mapMessageRow(
-  message: MessageRow,
-  customerName: string,
-  agentDisplayName: string
-): MockMessage {
-  const senderType: MockMessage['senderType'] =
-    message.sender_type === 'system' ? 'ai' : message.sender_type
-
+function mapMessageRow(message: MessageRow): TicketMessage {
   return {
     id: message.id,
-    senderType,
-    senderName:
-      senderType === 'ai'
-        ? 'Savly'
-        : senderType === 'agent'
-          ? agentDisplayName
-          : customerName,
     body: message.body,
-    createdAt: message.created_at,
+    sender_type: message.sender_type,
+    sender_id: message.sender_id,
+    created_at: message.created_at,
+    metadata: message.metadata,
   }
 }
 
-function mapTicketRow(raw: TicketWithRelations): MockTicket {
-  const customerName =
-    raw.customer?.full_name ?? raw.customer?.email ?? 'Client inconnu'
-  const customerEmail = raw.customer?.email ?? ''
-  const agentDisplayName = 'Agent'
-
+function mapTicketRow(raw: TicketRowWithRelations): TicketWithRelations {
   const messages = (raw.messages ?? [])
     .slice()
-    .sort((a, b) => toTimestamp(a.created_at) - toTimestamp(b.created_at))
-    .map((message) => mapMessageRow(message, customerName, agentDisplayName))
+    .sort((left, right) => toTimestamp(left.created_at) - toTimestamp(right.created_at))
+    .map((message) => mapMessageRow(message))
 
-  const lastMessage = messages[messages.length - 1]
+  const lastMessage = messages[messages.length - 1] ?? null
 
   return {
-    id: raw.id,
-    subject: raw.subject,
+    ...raw,
     customer: {
       id: raw.customer?.id ?? raw.customer_id,
-      name: customerName,
-      email: customerEmail,
+      email: raw.customer?.email ?? '',
+      full_name: raw.customer?.full_name ?? null,
+      metadata: raw.customer?.metadata ?? null,
     },
-    customerMetadata: toRecord(raw.customer?.metadata) ?? null,
-    status: raw.status,
-    priority: raw.priority,
-    channel: raw.channel,
-    assignedTo: raw.assigned_to ?? null,
-    assignedToId: raw.assigned_to ?? null,
-    unread: raw.status === 'open' && lastMessage?.senderType === 'customer',
-    tags: (raw.tags ?? [])
-      .map((tagRelation) => tagRelation.tag?.name)
-      .filter((name): name is string => Boolean(name)),
-    csatRating: (raw as Record<string, unknown>).csat_rating as number | null ?? null,
-    createdAt: raw.created_at,
-    lastMessagePreview: lastMessage?.body ?? null,
-    lastMessageAt: lastMessage?.createdAt ?? null,
-    lastMessageSenderType: lastMessage?.senderType ?? null,
     messages,
+    unread: raw.status === 'open' && lastMessage?.sender_type === 'customer',
+    tags: (raw.tags ?? [])
+      .map((relation) => relation.tag?.name)
+      .filter((name): name is string => Boolean(name)),
+    last_message_preview: lastMessage?.body.slice(0, 120) ?? null,
+    last_message_at: lastMessage?.created_at ?? null,
+    last_message_sender_type: lastMessage?.sender_type ?? null,
   }
 }
 
 export function useRealtimeTickets(
-  initialTickets: MockTicket[],
+  initialTickets: TicketWithRelations[],
   organizationId: string | null
 ): UseRealtimeTicketsResult {
-  const [tickets, setTickets] = useState<MockTicket[]>(initialTickets)
+  const [tickets, setTickets] = useState<TicketWithRelations[]>(initialTickets)
 
   useEffect(() => {
     if (!organizationId) return
@@ -125,31 +91,30 @@ export function useRealtimeTickets(
           return previousTickets
         }
 
-        const incomingMessage = mapMessageRow(
-          messageRow,
-          targetTicket.customer.name,
-          getAgentDisplayName(targetTicket.messages)
-        )
+        const incomingMessage = mapMessageRow(messageRow)
 
         const messagesWithoutTempDuplicate = targetTicket.messages.filter((message) => {
           if (!message.id.startsWith('m-temp-')) return true
-          if (message.senderType !== incomingMessage.senderType) return true
+          if (message.sender_type !== incomingMessage.sender_type) return true
           if (message.body.trim() !== incomingMessage.body.trim()) return true
 
-          const messageTime = toTimestamp(message.createdAt)
-          const incomingTime = toTimestamp(incomingMessage.createdAt)
+          const messageTime = toTimestamp(message.created_at)
+          const incomingTime = toTimestamp(incomingMessage.created_at)
           return Math.abs(messageTime - incomingTime) > 2 * 60 * 1000
         })
 
-        const updatedTicket: MockTicket = {
+        const updatedTicket: TicketWithRelations = {
           ...targetTicket,
           unread:
-            incomingMessage.senderType === 'agent' ? targetTicket.unread : true,
-          lastMessagePreview: incomingMessage.body,
-          lastMessageAt: incomingMessage.createdAt,
-          lastMessageSenderType: incomingMessage.senderType,
+            incomingMessage.sender_type === 'agent'
+              ? targetTicket.unread
+              : incomingMessage.sender_type === 'customer',
+          last_message_preview: incomingMessage.body.slice(0, 120),
+          last_message_at: incomingMessage.created_at,
+          last_message_sender_type: incomingMessage.sender_type,
           messages: [...messagesWithoutTempDuplicate, incomingMessage].sort(
-            (a, b) => toTimestamp(a.createdAt) - toTimestamp(b.createdAt)
+            (left, right) =>
+              toTimestamp(left.created_at) - toTimestamp(right.created_at)
           ),
         }
 
@@ -177,7 +142,7 @@ export function useRealtimeTickets(
 
       if (error || !data) return
 
-      const mappedTicket = mapTicketRow(data as unknown as TicketWithRelations)
+      const mappedTicket = mapTicketRow(data as unknown as TicketRowWithRelations)
       setTickets((previousTickets) => {
         const withoutCurrent = previousTickets.filter(
           (ticket) => ticket.id !== mappedTicket.id
@@ -196,9 +161,14 @@ export function useRealtimeTickets(
                 status: updatedRow.status,
                 priority: updatedRow.priority,
                 channel: updatedRow.channel,
-                assignedTo: updatedRow.assigned_to ?? null,
-                assignedToId: updatedRow.assigned_to ?? null,
-                createdAt: updatedRow.created_at,
+                assigned_to: updatedRow.assigned_to,
+                metadata: updatedRow.metadata,
+                ai_summary: updatedRow.ai_summary,
+                csat_rating: updatedRow.csat_rating,
+                csat_comment: updatedRow.csat_comment,
+                csat_at: updatedRow.csat_at,
+                created_at: updatedRow.created_at,
+                updated_at: updatedRow.updated_at,
               }
             : ticket
         )

@@ -137,26 +137,30 @@ export async function GET(request: NextRequest) {
     const userInfoResponse = await withTimeout(oauth2.userinfo.get())
     const userInfo = userInfoResponse.data
 
+    // Build payload — only overwrite refresh_token if Google returned a new one
+    const integrationPayload = {
+      organization_id: p.organization_id,
+      provider: 'gmail' as const,
+      status: 'active' as const,
+      access_token: tokens.access_token ? encrypt(tokens.access_token) : null,
+      refresh_token: tokens.refresh_token
+        ? encrypt(tokens.refresh_token)
+        : undefined as string | null | undefined,
+      token_expires_at: tokens.expiry_date
+        ? new Date(tokens.expiry_date).toISOString()
+        : null,
+      email: userInfo.email ?? null,
+      metadata: { scope: tokens.scope },
+      updated_at: new Date().toISOString(),
+    }
+    // Only include refresh_token in upsert if Google sent a new one
+    if (!tokens.refresh_token) {
+      delete integrationPayload.refresh_token
+    }
+
     const { error: dbError } = await supabase
       .from('integrations')
-      .upsert(
-        {
-          organization_id: p.organization_id,
-          provider: 'gmail',
-          status: 'active',
-          access_token: tokens.access_token ? encrypt(tokens.access_token) : null,
-          refresh_token: tokens.refresh_token
-            ? encrypt(tokens.refresh_token)
-            : null,
-          token_expires_at: tokens.expiry_date
-            ? new Date(tokens.expiry_date).toISOString()
-            : null,
-          email: userInfo.email ?? null,
-          metadata: { scope: tokens.scope },
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'organization_id,provider' }
-      )
+      .upsert(integrationPayload, { onConflict: 'organization_id,provider' })
 
     if (dbError) {
       console.error('Failed to save Gmail integration:', dbError.message)

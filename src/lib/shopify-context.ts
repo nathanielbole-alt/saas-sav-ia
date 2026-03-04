@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { Json } from '@/types/database.types'
+import { toRecord } from '@/lib/utils'
 
 export const SHOPIFY_API_VERSION = '2024-01'
 export const SHOPIFY_DOMAIN_REGEX = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i
@@ -67,14 +68,6 @@ type CustomerContextRow = {
   total_spent: number | null
   tags: string[] | null
   first_contact_at: string | null
-}
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return null
-  }
-
-  return value as Record<string, unknown>
 }
 
 function parseMoney(value: string | number | null | undefined): number {

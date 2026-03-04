@@ -12,6 +12,7 @@ import {
   upsertShopifyCustomerContext,
 } from '@/lib/shopify-context'
 import type { Integration } from '@/types/database.types'
+import { toRecord } from '@/lib/utils'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -36,14 +37,6 @@ type ShopifyWebhookOrderPayload = {
   financial_status?: string | null
   fulfillment_status?: string | null
   customer?: ShopifyWebhookCustomerPayload | null
-}
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return null
-  }
-
-  return value as Record<string, unknown>
 }
 
 function verifyShopifyWebhookSignature(

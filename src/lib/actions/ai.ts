@@ -12,6 +12,7 @@ import { PLANS } from '@/lib/stripe'
 import type { Database } from '@/types/database.types'
 import { sendGmailReply } from '@/lib/actions/gmail'
 import { sendMetaReply, extractMetaReplyContext } from '@/lib/actions/meta'
+import { extractGmailReplyContext, toRecord } from '@/lib/utils'
 
 const SYSTEM_PROMPT = `Tu es un conseiller SAV expérimenté, chaleureux et à l'écoute. Tu parles comme un vrai humain, pas comme un robot. Tu es là pour aider, rassurer et trouver des solutions.
 
@@ -55,13 +56,6 @@ const ticketIdSchema = z.string().uuid()
 const ESCALATION_TAG = '[ESCALADE_HUMAIN]'
 
 type AppSupabaseClient = SupabaseClient<Database>
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return null
-  }
-  return value as Record<string, unknown>
-}
 
 const shopifyRefundLineItemSchema = z
   .object({
@@ -196,32 +190,6 @@ function getRefundStatusLabel(
     return 'remboursement total'
   }
   return 'remboursement partiel'
-}
-
-function extractGmailReplyContext(metadata: unknown): {
-  threadId: string | null
-  inReplyToMessageId: string | null
-} {
-  const metadataRecord = toRecord(metadata)
-  if (!metadataRecord) {
-    return { threadId: null, inReplyToMessageId: null }
-  }
-
-  const threadId =
-    typeof metadataRecord.gmail_thread_id === 'string'
-      ? metadataRecord.gmail_thread_id
-      : null
-
-  const inReplyToMessageId =
-    typeof metadataRecord.gmail_message_id_header === 'string'
-      ? metadataRecord.gmail_message_id_header
-      : typeof metadataRecord.in_reply_to_message_id === 'string'
-        ? metadataRecord.in_reply_to_message_id
-        : typeof metadataRecord.message_id === 'string'
-          ? metadataRecord.message_id
-          : null
-
-  return { threadId, inReplyToMessageId }
 }
 
 async function enforceAiRateLimit(orgId: string) {
@@ -536,7 +504,7 @@ ${recentTicketsLines.join('\n')}`
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured')
 
-  const openai = new OpenAI({ apiKey })
+  const openai = new OpenAI({ apiKey, maxRetries: 2 })
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',

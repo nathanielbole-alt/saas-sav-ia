@@ -4,16 +4,10 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { decrypt, encrypt } from '@/lib/encryption'
 import { z } from 'zod'
 import type { Integration } from '@/types/database.types'
+import { toRecord } from '@/lib/utils'
 
 const GRAPH_API = 'https://graph.facebook.com/v21.0'
 const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-        return null
-    }
-    return value as Record<string, unknown>
-}
 
 const sendMetaReplyParamsSchema = z.object({
     organizationId: z.string().uuid(),
@@ -139,7 +133,7 @@ export async function sendMetaReply(params: {
 /**
  * Refresh the Meta page token using the long-lived user token.
  */
-export async function refreshMetaPageToken(
+async function refreshMetaPageToken(
     integrationId: string
 ): Promise<{ success: boolean; newToken?: string }> {
     const { data: integration } = await supabaseAdmin

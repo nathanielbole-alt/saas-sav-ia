@@ -48,13 +48,24 @@ const formatResponseTime = (minutes: number): string => {
   return remainHours > 0 ? `${days}j ${remainHours}h` : `${days}j`
 }
 
-function CustomTooltip({ active, payload, label, formatter }: any) {
-  if (active && payload && payload.length) {
+type ChartTooltipProps = {
+  active?: boolean
+  payload?: Array<{ value: number | string }>
+  label?: string
+  formatter?: (value: number) => string
+}
+
+function CustomTooltip({ active, payload, label, formatter }: ChartTooltipProps) {
+  const firstPayload = payload?.[0]
+
+  if (active && firstPayload) {
     return (
       <div className="rounded-xl border border-white/10 bg-black/80 backdrop-blur-xl p-3 shadow-2xl">
         <p className="text-[12px] font-medium text-[#86868b] mb-1">{label}</p>
         <p className="text-[14px] font-semibold text-white">
-          {formatter ? formatter(payload[0].value) : payload[0].value}
+          {formatter && typeof firstPayload.value === 'number'
+            ? formatter(firstPayload.value)
+            : firstPayload.value}
         </p>
       </div>
     )

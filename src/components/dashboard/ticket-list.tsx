@@ -1,21 +1,9 @@
 'use client'
 
 import { Search, Mail, FileText, Star, Pen, Filter, ArrowUp, ArrowDown, Inbox } from 'lucide-react'
-import type { MockTicket } from '@/lib/mock-data'
-import { cn } from '@/lib/utils'
-
-// ── Helpers ─────────────────────────────────────────────────────────────────
-
-function timeAgo(dateStr: string): string {
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (seconds < 60) return "à l'instant"
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}min`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  const days = Math.floor(hours / 24)
-  return `${days}j`
-}
+// DEMO_MODE: the ticket list still renders placeholder ticket data until the dashboard is fully DB-native.
+import type { TicketWithRelations } from '@/types/view-models'
+import { cn, getCustomerName, timeAgo } from '@/lib/utils'
 
 function getInitials(name: string): string {
   return name
@@ -43,7 +31,7 @@ function getAvatarColor(name: string): string {
   return avatarColors[Math.abs(hash) % avatarColors.length] ?? avatarColors[0] as string
 }
 
-const channelIcons: Record<MockTicket['channel'], typeof Mail> = {
+const channelIcons: Record<TicketWithRelations['channel'], typeof Mail> = {
   email: Mail,
   form: FileText,
   google_review: Star,
@@ -52,7 +40,7 @@ const channelIcons: Record<MockTicket['channel'], typeof Mail> = {
   messenger: Mail,
 }
 
-const priorityConfig: Record<MockTicket['priority'], { style: string; icon?: React.ComponentType<{ className?: string }> }> = {
+const priorityConfig: Record<TicketWithRelations['priority'], { style: string; icon?: React.ComponentType<{ className?: string }> }> = {
   urgent: { style: 'bg-[#ff453a]/10 text-[#ff453a]', icon: ArrowUp },
   high: { style: 'bg-[#ff9f0a]/10 text-[#ff9f0a]', icon: ArrowUp },
   medium: { style: 'bg-[#ffd60a]/10 text-[#ffd60a]' },
@@ -80,7 +68,7 @@ export function TicketList({
   search,
   onSearchChange,
 }: {
-  tickets: MockTicket[]
+  tickets: TicketWithRelations[]
   selectedId: string | null
   onSelect: (id: string) => void
   filter: TicketFilter
@@ -149,9 +137,10 @@ export function TicketList({
           </div>
         ) : (
           tickets.map((ticket) => {
+            const customerName = getCustomerName(ticket.customer)
             const lastMsg = ticket.messages[ticket.messages.length - 1]
-            const lastMessageBody = lastMsg?.body ?? ticket.lastMessagePreview ?? ''
-            const lastMessageAt = lastMsg?.createdAt ?? ticket.lastMessageAt ?? ticket.createdAt
+            const lastMessageBody = lastMsg?.body ?? ticket.last_message_preview ?? ''
+            const lastMessageAt = lastMsg?.created_at ?? ticket.last_message_at ?? ticket.created_at
             const ChannelIcon = channelIcons[ticket.channel]
             const isSelected = ticket.id === selectedId
             const PriorityIcon = priorityConfig[ticket.priority].icon
@@ -173,10 +162,10 @@ export function TicketList({
                     <div
                       className={cn(
                         "flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-semibold",
-                        getAvatarColor(ticket.customer.name)
+                        getAvatarColor(customerName)
                       )}
                     >
-                      {getInitials(ticket.customer.name)}
+                      {getInitials(customerName)}
                     </div>
                     {ticket.unread && (
                       <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#0a84ff] shadow-[0_0_8px_rgba(10,132,255,0.8)]" />
@@ -197,7 +186,7 @@ export function TicketList({
                             : "font-medium text-white"
                         )}
                       >
-                        {ticket.customer.name}
+                        {customerName}
                       </span>
                       <span className="shrink-0 text-[11px] text-[#86868b] font-medium">
                         {timeAgo(lastMessageAt)}

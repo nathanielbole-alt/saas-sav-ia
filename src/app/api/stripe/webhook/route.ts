@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPlanFromPriceId, stripe, type PlanKey } from '@/lib/stripe'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { normalizeSubscriptionStatus, type OrgSubscriptionStatus } from '@/lib/stripe-utils'
 import type { Stripe as StripeType } from 'stripe'
 
 // Local webhook setup:
@@ -12,23 +13,6 @@ export const runtime = 'nodejs'
 
 function isPlanKey(value: string | undefined): value is PlanKey {
     return value === 'pro' || value === 'business' || value === 'enterprise'
-}
-
-type OrgSubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
-
-function normalizeSubscriptionStatus(value: string): OrgSubscriptionStatus {
-    if (value === 'active') return 'active'
-    if (value === 'trialing') return 'trialing'
-    if (
-        value === 'past_due' ||
-        value === 'unpaid' ||
-        value === 'incomplete' ||
-        value === 'incomplete_expired'
-    ) {
-        return 'past_due'
-    }
-    if (value === 'canceled') return 'canceled'
-    return 'active'
 }
 
 function resolvePlanFromSubscription(
@@ -136,9 +120,11 @@ export async function POST(req: NextRequest) {
                     subscription.status === 'incomplete' ||
                     subscription.status === 'incomplete_expired'
                 ) {
+                    // Don't downgrade plan — Stripe retries payments automatically.
+                    // Only update status. Plan downgrade happens on subscription.deleted.
                     await supabaseAdmin
                         .from('organizations')
-                        .update({ plan: 'pro', subscription_status: 'past_due' })
+                        .update({ subscription_status: 'past_due' })
                         .eq('id', integration.organization_id)
                 } else if (subscription.status === 'canceled') {
                     await supabaseAdmin
@@ -185,9 +171,11 @@ export async function POST(req: NextRequest) {
                 .single()
 
             if (integration?.organization_id) {
+                // Don't downgrade plan on payment failure — Stripe retries automatically.
+                // Only update status to 'past_due'. Plan downgrade happens on subscription.deleted.
                 await supabaseAdmin
                     .from('organizations')
-                    .update({ plan: 'pro', subscription_status: 'past_due' })
+                    .update({ subscription_status: 'past_due' })
                     .eq('id', integration.organization_id)
             }
             break

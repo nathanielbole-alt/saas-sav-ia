@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { google } from 'googleapis'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { checkFeatureAccess } from '@/lib/feature-gate'
@@ -233,15 +234,18 @@ async function syncOrgGmail(integration: Integration): Promise<{
       customerId = (newCustomer as { id: string }).id
     }
 
-    // Skip if already imported
     const gmailMessageId = msg.id ?? ''
-    const { data: existingMsg } = await supabaseAdmin
-      .from('messages')
-      .select('id')
-      .eq('metadata->>gmail_id', gmailMessageId)
-      .limit(1)
 
-    if (existingMsg && existingMsg.length > 0) continue
+    // Skip if already imported (fast pre-check)
+    if (gmailMessageId) {
+      const { data: existingMsg } = await supabaseAdmin
+        .from('messages')
+        .select('id')
+        .eq('metadata->>gmail_id', gmailMessageId)
+        .limit(1)
+
+      if (existingMsg && existingMsg.length > 0) continue
+    }
 
     // Create ticket
     const { data: ticket } = await supabaseAdmin
@@ -259,7 +263,8 @@ async function syncOrgGmail(integration: Integration): Promise<{
 
     if (!ticket) continue
 
-    await supabaseAdmin.from('messages').insert({
+    // Insert message — deduplicated by unique index on metadata->>'gmail_id'
+    const { error: msgError } = await supabaseAdmin.from('messages').insert({
       ticket_id: (ticket as { id: string }).id,
       sender_type: 'customer',
       sender_id: customerId,
@@ -271,6 +276,12 @@ async function syncOrgGmail(integration: Integration): Promise<{
         from,
       },
     })
+
+    if (msgError) {
+      if (msgError.code === '23505') continue // unique_violation — skip duplicate
+      console.error('Failed to insert Gmail message:', msgError.message)
+      continue
+    }
 
     triggerAutoReply((ticket as { id: string }).id)
     importedCount++
@@ -290,8 +301,15 @@ export async function GET(request: Request) {
     console.error('CRON_SECRET is not configured — rejecting cron request')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${cronSecret}`) {
+  const authHeader = request.headers.get('authorization') ?? ''
+  const expected = `Bearer ${cronSecret}`
+  const isValid =
+    authHeader.length === expected.length &&
+    crypto.timingSafeEqual(
+      Buffer.from(authHeader, 'utf8'),
+      Buffer.from(expected, 'utf8')
+    )
+  if (!isValid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

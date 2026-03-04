@@ -36,15 +36,12 @@ export default function MentionsLegalesPage() {
           </p>
           <p>
             <span className="font-medium text-zinc-100">Siège social :</span> [Adresse à compléter]
-            {/* TODO: À compléter */}
           </p>
           <p>
             <span className="font-medium text-zinc-100">Capital social :</span> [À compléter]
-            {/* TODO: À compléter */}
           </p>
           <p>
             <span className="font-medium text-zinc-100">RCS :</span> [À compléter]
-            {/* TODO: À compléter */}
           </p>
           <p>
             <span className="font-medium text-zinc-100">Email :</span>{' '}
@@ -55,7 +52,6 @@ export default function MentionsLegalesPage() {
           <p>
             <span className="font-medium text-zinc-100">Directeur de la publication :</span>{' '}
             [Nom du dirigeant]
-            {/* TODO: À compléter */}
           </p>
         </div>
       </section>

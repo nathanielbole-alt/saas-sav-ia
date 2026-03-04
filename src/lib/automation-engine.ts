@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { logger } from '@/lib/logger'
 import type { Database, Json } from '@/types/database.types'
 
 export type AutomationRecord = Database['public']['Tables']['automations']['Row']
@@ -524,9 +525,11 @@ export async function executeAction(
       return !error
     }
     case 'notify_slack':
-      console.log(
-        `[Automation] notify_slack org=${automation.organization_id} automation=${automation.id} ticket=${ticket.id}`
-      )
+      logger.info('Automation notify_slack placeholder', {
+        organizationId: automation.organization_id,
+        automationId: automation.id,
+        ticketId: ticket.id,
+      })
       return true
     default:
       return false

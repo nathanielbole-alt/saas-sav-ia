@@ -21,8 +21,9 @@ import {
   MessageSquare,
   Loader2,
 } from 'lucide-react'
-import type { MockTicket } from '@/lib/mock-data'
-import { cn } from '@/lib/utils'
+// DEMO_MODE: ticket detail still expects placeholder ticket data until the inbox types are unified.
+import type { TicketWithRelations } from '@/types/view-models'
+import { cn, getCustomerName, toRecord } from '@/lib/utils'
 import { submitTicketFeedback } from '@/lib/actions/feedback'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -60,13 +61,6 @@ type RefundPreview = {
   refundedAmount: number | null
   refundedAt: string | null
   status: 'partiel' | 'total'
-}
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    return null
-  }
-  return value as Record<string, unknown>
 }
 
 function parseNumberish(value: unknown): number | null {
@@ -190,7 +184,7 @@ function getRefundsPreview(
 }
 
 const statusConfig: Record<
-  MockTicket['status'],
+  TicketWithRelations['status'],
   { bg: string; text: string; icon: typeof AlertCircle; label: string }
 > = {
   open: { bg: 'bg-[#30d158]/20 border border-[#30d158]/30 shadow-[0_0_10px_rgba(48,209,88,0.2)]', text: 'text-[#30d158]', icon: AlertCircle, label: 'Ouvert' },
@@ -199,7 +193,7 @@ const statusConfig: Record<
   closed: { bg: 'bg-white/10 border border-white/10', text: 'text-[#86868b]', icon: CheckCircle2, label: 'Fermé' },
 }
 
-const channelLabels: Record<MockTicket['channel'], { icon: typeof Mail; label: string }> = {
+const channelLabels: Record<TicketWithRelations['channel'], { icon: typeof Mail; label: string }> = {
   email: { icon: Mail, label: 'Email' },
   form: { icon: FileText, label: 'Formulaire' },
   google_review: { icon: Star, label: 'Avis Google' },
@@ -230,7 +224,7 @@ export function TicketDetail({
   ticket,
   onSendMessage,
 }: {
-  ticket: MockTicket | null
+  ticket: TicketWithRelations | null
   onSendMessage: (body: string) => void
 }) {
   const [reply, setReply] = useState('')
@@ -255,7 +249,8 @@ export function TicketDetail({
   const channel = channelLabels[ticket.channel]
   const ChannelIcon = channel.icon
   const StatusIcon = status.icon
-  const refundsPreview = getRefundsPreview(ticket.customerMetadata)
+  const customerName = getCustomerName(ticket.customer)
+  const refundsPreview = getRefundsPreview(toRecord(ticket.customer.metadata))
 
   const handleSend = () => {
     if (!reply.trim()) return
@@ -282,7 +277,7 @@ export function TicketDetail({
 
   const showFeedback =
     (ticket.status === 'resolved' || ticket.status === 'closed') &&
-    ticket.csatRating == null &&
+    ticket.csat_rating == null &&
     !feedbackSubmitted
 
   return (
@@ -310,7 +305,7 @@ export function TicketDetail({
                 <div className="h-6 w-6 rounded-full bg-white/10 border border-white/10 flex items-center justify-center shadow-sm">
                   <User className="h-3.5 w-3.5 text-[#86868b]" />
                 </div>
-                <span className="text-[13px] font-medium text-white shadow-sm">{ticket.customer.name}</span>
+                <span className="text-[13px] font-medium text-white shadow-sm">{customerName}</span>
                 <span className="text-[12px] text-[#86868b]">{ticket.customer.email}</span>
               </div>
               <div className="w-px h-3 bg-white/10" />
@@ -355,8 +350,13 @@ export function TicketDetail({
           >
             <div className="mx-auto max-w-3xl space-y-5">
               {ticket.messages.map((msg) => {
-                const isMe = msg.senderType === 'agent'
-                const isAI = msg.senderType === 'ai'
+                const isMe = msg.sender_type === 'agent'
+                const isAI = msg.sender_type === 'ai' || msg.sender_type === 'system'
+                const senderLabel = isAI
+                  ? 'Savly'
+                  : isMe
+                    ? 'Agent'
+                    : customerName
 
                 return (
                   <div key={msg.id} className={cn(
@@ -367,11 +367,11 @@ export function TicketDetail({
                     {!isMe && (
                       <div className="flex items-center gap-2 px-1 mb-1">
                         <span className="text-[11px] font-medium text-[#86868b] pl-1">
-                          {msg.senderName}
+                          {senderLabel}
                           {isAI && <span className="ml-1 inline-flex items-center gap-0.5 text-[#bf5af2]"><Bot className="h-3 w-3" /> IA</span>}
                         </span>
                         <span className="text-[10px] text-[#555]">
-                          {formatDate(msg.createdAt)}
+                          {formatDate(msg.created_at)}
                         </span>
                       </div>
                     )}
@@ -379,7 +379,7 @@ export function TicketDetail({
                     {isMe && (
                       <div className="flex items-center gap-2 px-1 mb-1">
                         <span className="text-[10px] text-[#555]">
-                          {formatDate(msg.createdAt)}
+                          {formatDate(msg.created_at)}
                         </span>
                       </div>
                     )}

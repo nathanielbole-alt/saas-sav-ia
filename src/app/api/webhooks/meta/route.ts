@@ -8,6 +8,7 @@ import {
 } from '@/lib/integration-event-receipts'
 import type { Integration } from '@/types/database.types'
 import crypto from 'crypto'
+import { toRecord } from '@/lib/utils'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -77,13 +78,6 @@ function verifySignature(body: string, signature: string | null): boolean {
     } catch {
         return false
     }
-}
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-        return null
-    }
-    return value as Record<string, unknown>
 }
 
 function isReactionOnlyMessage(text: string): boolean {

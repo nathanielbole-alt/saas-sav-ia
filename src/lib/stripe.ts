@@ -5,17 +5,39 @@ import Stripe from 'stripe'
 export { PLANS, type PlanKey } from './plans'
 import type { PlanKey } from './plans'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('Missing STRIPE_SECRET_KEY environment variable')
+let _stripe: Stripe | null = null
+
+/**
+ * Lazily initialise the Stripe SDK.
+ * Throws only when billing code is actually invoked, not at module-import time.
+ */
+export function getStripe(): Stripe {
+    if (!_stripe) {
+        const key = process.env.STRIPE_SECRET_KEY
+        if (!key) {
+            throw new Error(
+                'STRIPE_SECRET_KEY is required for billing operations. ' +
+                'Set it in .env.local or disable billing features.'
+            )
+        }
+        _stripe = new Stripe(key, { typescript: true })
+    }
+    return _stripe
 }
+
+/**
+ * Backward-compatible export.
+ * Every property access is forwarded to the lazily-created Stripe instance.
+ */
+export const stripe = new Proxy({} as Stripe, {
+    get(_, prop) {
+        return (getStripe() as unknown as Record<string | symbol, unknown>)[prop]
+    },
+})
 
 const proPriceId = process.env.STRIPE_PRO_PRICE_ID ?? null
 const businessPriceId = process.env.STRIPE_BUSINESS_PRICE_ID ?? null
 const enterprisePriceId = process.env.STRIPE_ENTERPRISE_PRICE_ID ?? null
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    typescript: true,
-})
 
 /**
  * Maps a Stripe priceId → a plan key, or null if unknown.

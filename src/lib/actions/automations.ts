@@ -11,7 +11,7 @@ import {
   processAutomation,
   type AutomationRecord,
   type CronSummary,
-} from '@/lib/automation-engine'
+} from '@/lib/automation'
 import type { Json } from '@/types/database.types'
 
 // ── Types ───────────────────────────────────────────────────────────────────

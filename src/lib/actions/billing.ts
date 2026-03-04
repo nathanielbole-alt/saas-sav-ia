@@ -4,29 +4,13 @@ import { getPlanFromPriceId, getPriceIdForPlan, PLANS, stripe, type PlanKey } fr
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getOrgPlan, getOrgUsage } from '@/lib/feature-gate'
+import { normalizeSubscriptionStatus } from '@/lib/stripe-utils'
 
 type UserBillingContext = {
     userId: string
     userEmail: string | null
     organizationId: string
     role: 'owner' | 'admin' | 'agent'
-}
-
-type BillingSubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
-
-function normalizeStripeSubscriptionStatus(status: string): BillingSubscriptionStatus {
-    if (status === 'active') return 'active'
-    if (status === 'trialing') return 'trialing'
-    if (
-        status === 'past_due' ||
-        status === 'unpaid' ||
-        status === 'incomplete' ||
-        status === 'incomplete_expired'
-    ) {
-        return 'past_due'
-    }
-    if (status === 'canceled') return 'canceled'
-    return 'active'
 }
 
 async function getCurrentUserBillingContext(): Promise<UserBillingContext | null> {
@@ -210,7 +194,7 @@ export async function getSubscriptionInfo() {
         .maybeSingle()
 
     const organizationPlan = (organization as { plan?: PlanKey } | null)?.plan ?? 'pro'
-    const organizationSubscriptionStatus = normalizeStripeSubscriptionStatus(
+    const organizationSubscriptionStatus = normalizeSubscriptionStatus(
         (organization as { subscription_status?: string } | null)?.subscription_status ?? 'active'
     )
 
@@ -263,7 +247,7 @@ export async function getSubscriptionInfo() {
         plan:
             getPlanFromPriceId(sub.items.data[0]?.price.id) ??
             ((sub.metadata.plan as PlanKey | undefined) ?? organizationPlan),
-        status: normalizeStripeSubscriptionStatus(sub.status),
+        status: normalizeSubscriptionStatus(sub.status),
         currentPeriodEnd: null,
         cancelAtPeriodEnd: sub.cancel_at_period_end,
         trialEnd: sub.trial_end,

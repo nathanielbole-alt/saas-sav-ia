@@ -183,50 +183,58 @@ export async function syncShopifyCustomers(): Promise<{
   const { supabase, orgId, integration, shop, accessToken } = ctx
 
   try {
-    const response = await fetch(
-      `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/customers.json?limit=50`,
-      {
+    let importedCount = 0
+    let url: string | null = `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/customers.json?limit=250`
+    let pageCount = 0
+    const MAX_PAGES = 20 // safeguard: max 5000 records
+
+    while (url && pageCount < MAX_PAGES) {
+      pageCount++
+      const res: Response = await fetch(url, {
         headers: {
           'X-Shopify-Access-Token': accessToken,
           'Content-Type': 'application/json',
         },
-      }
-    )
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        await supabase
-          .from('integrations')
-          .update({ status: 'error', updated_at: new Date().toISOString() })
-          .eq('id', integration.id)
-      }
-      return { success: false, count: 0, error: 'Shopify API error' }
-    }
-
-    const data = (await response.json()) as {
-      customers: Array<{
-        id: number
-        email: string | null
-        first_name: string | null
-        last_name: string | null
-        phone: string | null
-      }>
-    }
-
-    let importedCount = 0
-
-    for (const shopifyCustomer of data.customers) {
-      if (!shopifyCustomer.email) continue
-
-      const result = await upsertShopifyCustomerContext(orgId, {
-        id: shopifyCustomer.id,
-        email: shopifyCustomer.email,
-        first_name: shopifyCustomer.first_name,
-        last_name: shopifyCustomer.last_name,
-        phone: shopifyCustomer.phone,
       })
 
-      if (result.customerId) importedCount++
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          await supabase
+            .from('integrations')
+            .update({ status: 'error', updated_at: new Date().toISOString() })
+            .eq('id', integration.id)
+        }
+        return { success: false, count: importedCount, error: 'Shopify API error' }
+      }
+
+      const data = (await res.json()) as {
+        customers: Array<{
+          id: number
+          email: string | null
+          first_name: string | null
+          last_name: string | null
+          phone: string | null
+        }>
+      }
+
+      for (const shopifyCustomer of data.customers) {
+        if (!shopifyCustomer.email) continue
+
+        const result = await upsertShopifyCustomerContext(orgId, {
+          id: shopifyCustomer.id,
+          email: shopifyCustomer.email,
+          first_name: shopifyCustomer.first_name,
+          last_name: shopifyCustomer.last_name,
+          phone: shopifyCustomer.phone,
+        })
+
+        if (result.customerId) importedCount++
+      }
+
+      // Cursor-based pagination via Link header
+      const lh: string | null = res.headers.get('Link')
+      const nm: RegExpMatchArray | null | undefined = lh?.match(/<([^>]+)>;\s*rel="next"/)
+      url = nm?.[1] ?? null
     }
 
     revalidatePath('/dashboard')
@@ -256,96 +264,104 @@ export async function syncShopifyOrders(): Promise<{
   const { supabase, orgId, integration, shop, accessToken } = ctx
 
   try {
-    const response = await fetch(
-      `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/orders.json?limit=50&status=any`,
-      {
+    let importedCount = 0
+    let url: string | null = `https://${shop}/admin/api/${SHOPIFY_API_VERSION}/orders.json?limit=250&status=any`
+    let pageCount = 0
+    const MAX_PAGES = 20 // safeguard: max 5000 records
+
+    while (url && pageCount < MAX_PAGES) {
+      pageCount++
+      const res: Response = await fetch(url, {
         headers: {
           'X-Shopify-Access-Token': accessToken,
           'Content-Type': 'application/json',
         },
-      }
-    )
+      })
 
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        await supabase
-          .from('integrations')
-          .update({ status: 'error', updated_at: new Date().toISOString() })
-          .eq('id', integration.id)
-      }
-      return { success: false, count: 0, error: 'Shopify API error' }
-    }
-
-    const data = (await response.json()) as {
-      orders: Array<{
-        id: number
-        name: string // e.g. "#1001"
-        email: string | null
-        created_at: string
-        total_price: string
-        financial_status: string
-        fulfillment_status: string | null
-        customer: {
-          id: number
-          email: string | null
-          first_name: string | null
-          last_name: string | null
-        } | null
-      }>
-    }
-
-    let importedCount = 0
-
-    for (const order of data.orders) {
-      const customerEmail = order.email ?? order.customer?.email
-      if (!customerEmail) continue
-      let refunds: ShopifyOrderRefund[] = []
-
-      try {
-        refunds = await fetchOrderRefunds(shop, accessToken, order.id)
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'refunds_failed'
-        if (
-          message.includes('refunds_http_401') ||
-          message.includes('refunds_http_403')
-        ) {
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
           await supabase
             .from('integrations')
             .update({ status: 'error', updated_at: new Date().toISOString() })
             .eq('id', integration.id)
-          return { success: false, count: 0, error: 'Shopify API error' }
         }
+        return { success: false, count: importedCount, error: 'Shopify API error' }
+      }
 
-        console.error(
-          `Shopify refunds fetch failed for order ${order.id}:`,
-          message
+      const data = (await res.json()) as {
+        orders: Array<{
+          id: number
+          name: string
+          email: string | null
+          created_at: string
+          total_price: string
+          financial_status: string
+          fulfillment_status: string | null
+          customer: {
+            id: number
+            email: string | null
+            first_name: string | null
+            last_name: string | null
+          } | null
+        }>
+      }
+
+      for (const order of data.orders) {
+        const customerEmail = order.email ?? order.customer?.email
+        if (!customerEmail) continue
+        let refunds: ShopifyOrderRefund[] = []
+
+        try {
+          refunds = await fetchOrderRefunds(shop, accessToken, order.id)
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'refunds_failed'
+          if (
+            message.includes('refunds_http_401') ||
+            message.includes('refunds_http_403')
+          ) {
+            await supabase
+              .from('integrations')
+              .update({ status: 'error', updated_at: new Date().toISOString() })
+              .eq('id', integration.id)
+            return { success: false, count: importedCount, error: 'Shopify API error' }
+          }
+
+          console.error(
+            `Shopify refunds fetch failed for order ${order.id}:`,
+            message
+          )
+        }
+        const synced = await syncShopifyOrderContext(
+          orgId,
+          {
+            id: order.id,
+            name: order.name,
+            email: customerEmail,
+            created_at: order.created_at,
+            total_price: order.total_price,
+            financial_status: order.financial_status,
+            fulfillment_status: order.fulfillment_status,
+            customer: order.customer
+              ? {
+                  id: order.customer.id,
+                  email: order.customer.email,
+                  first_name: order.customer.first_name,
+                  last_name: order.customer.last_name,
+                }
+              : null,
+          },
+          refunds
         )
-      }
-      const synced = await syncShopifyOrderContext(
-        orgId,
-        {
-          id: order.id,
-          name: order.name,
-          email: customerEmail,
-          created_at: order.created_at,
-          total_price: order.total_price,
-          financial_status: order.financial_status,
-          fulfillment_status: order.fulfillment_status,
-          customer: order.customer
-            ? {
-                id: order.customer.id,
-                email: order.customer.email,
-                first_name: order.customer.first_name,
-                last_name: order.customer.last_name,
-              }
-            : null,
-        },
-        refunds
-      )
 
-      if (synced) {
-        importedCount++
+        if (synced) {
+          importedCount++
+        }
       }
+
+      // Cursor-based pagination via Link header
+      const lh: string | null = res.headers.get('Link')
+      const nm: RegExpMatchArray | null | undefined = lh?.match(/<([^>]+)>;\s*rel="next"/)
+      url = nm?.[1] ?? null
     }
 
     revalidatePath('/dashboard')

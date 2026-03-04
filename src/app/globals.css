@@ -4,12 +4,6 @@
   --background: #000000;
   --foreground: #F5F5F7;
   --accent: #0a84ff;
-  --accent-hover: #409cff;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(255, 255, 255, 0.08);
-  --border: rgba(255, 255, 255, 0.1);
-  --text-secondary: #86868b;
-  --text-tertiary: #48484a;
 
   --orb-1: #ff453a;
   --orb-2: #bf5af2;
@@ -29,7 +23,6 @@
   --animate-float-3: float-3 12s ease-in-out infinite;
   --animate-float-4: float-4 9s ease-in-out infinite;
   --animate-pulse-soft: pulse-soft 4s ease-in-out infinite;
-  --animate-sphere-rotate: sphere-rotate 20s linear infinite;
 }
 
 /* Marquee */
@@ -123,16 +116,6 @@
 
   50% {
     opacity: 1;
-  }
-}
-
-@keyframes sphere-rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
   }
 }
 
